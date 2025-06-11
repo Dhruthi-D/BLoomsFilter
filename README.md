@@ -120,7 +120,3 @@ The application includes comprehensive error handling for:
 ## Contributing
 
 Feel free to submit issues, fork the repository, and create pull requests for any improvements.
-
-## License
-
-[Your License Type] - See LICENSE file for details
