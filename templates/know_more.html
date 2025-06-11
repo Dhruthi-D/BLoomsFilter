@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Bloom Filters</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1rem; transition: background 0.3s, color 0.3s; }
+        .container { max-width: 900px; margin-top: 40px; }
+        .card { border-radius: 16px; box-shadow: 0 4px 16px rgba(75,85,99,0.08); margin-bottom: 2rem; }
+        h1, h2, h3 { color: #4B5563; font-weight: 700; }
+        .btn-back { background: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%); color: #fff; border: none; border-radius: 8px; font-weight: 600; }
+        .btn-back:hover { background: #6366F1; color: #fff; }
+        .type-card { background: #fff; border-left: 6px solid #6366F1; }
+        .type-card h3 { color: #6366F1; font-size: 1.15rem; }
+        .comparison-table th, .comparison-table td { text-align: center; }
+        .comparison-table th { background: #6366F1; color: #fff; }
+        .comparison-table tr:nth-child(even) { background: #f3f4f6; }
+        .section-title { font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; color: #6366F1; display: flex; align-items: center; gap: 0.5rem; }
+        .divider { border-top: 2px solid #e5e7eb; margin: 2rem 0; }
+        .how-steps { list-style: none; padding-left: 0; }
+        .how-steps li { margin-bottom: 0.7rem; display: flex; align-items: flex-start; gap: 0.7rem; }
+        .how-steps i { color: #6366F1; font-size: 1.1rem; margin-top: 0.2rem; }
+        .use-case-list { list-style: disc; margin-left: 1.5rem; }
+        .svg-diagram { display: block; margin: 0 auto 1.5rem auto; max-width: 320px; }
+        .dark-toggle { position: fixed; top: 30px; left: 40px; z-index: 1001; background: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%); color: #fff; border: none; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 2px 8px rgba(75, 85, 99, 0.13); cursor: pointer; transition: background 0.3s, color 0.3s; }
+        .dark-toggle:hover { background: #6366F1; color: #f1c40f; }
+        body.dark-mode { background: #181a1b; color: #f1f1f1; }
+        body.dark-mode .card, body.dark-mode .type-card { background: #232526; color: #f1f1f1; }
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode .section-title { color: #fff; }
+        body.dark-mode .comparison-table th { background: #6366F1; color: #fff; }
+        body.dark-mode .comparison-table tr:nth-child(even) { background: #232526; }
+    </style>
+</head>
+<body>
+    <button class="dark-toggle" id="darkToggle" title="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+    <div class="container">
+        <a href="/" class="btn btn-back mb-4"><i class="fas fa-arrow-left me-2"></i>Back to Main</a>
+        <h1 class="mb-4"><i class="fas fa-info-circle me-2"></i>About Bloom Filters</h1>
+        <div class="card p-4 mb-4">
+            <h2 class="section-title"><i class="fas fa-question-circle"></i> What is a Bloom Filter?</h2>
+            <svg class="svg-diagram" viewBox="0 0 320 80">
+                <rect x="10" y="30" width="200" height="20" rx="10" fill="#A5B4FC"/>
+                <text x="110" y="45" text-anchor="middle" fill="#fff" font-size="14">Bit Array</text>
+                <circle cx="250" cy="40" r="18" fill="#6366F1"/>
+                <text x="250" y="45" text-anchor="middle" fill="#fff" font-size="13">Query</text>
+                <line x1="210" y1="40" x2="232" y2="40" stroke="#6366F1" stroke-width="3" marker-end="url(#arrow)"/>
+                <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10" fill="#6366F1"/></marker></defs>
+            </svg>
+            <p>A <strong>Bloom filter</strong> is a space-efficient probabilistic data structure used to test whether an element is a member of a set. False positive matches are possible, but false negatives are not. This means a query returns either "possibly in set" or "definitely not in set".</p>
+            <ul>
+                <li>Very fast and memory-efficient for large datasets</li>
+                <li>Allows for a tunable false positive rate</li>
+                <li>Widely used in databases, networking, and bioinformatics</li>
+            </ul>
+        </div>
+        <div class="divider"></div>
+        <div class="card p-4 mb-4">
+            <h2 class="section-title"><i class="fas fa-cogs"></i> How Does a Bloom Filter Work?</h2>
+            <ul class="how-steps">
+                <li><i class="fas fa-hashtag"></i> <span>Multiple hash functions map each input to several positions in a bit array.</span></li>
+                <li><i class="fas fa-toggle-on"></i> <span>To add an item, set the bits at all hash positions to 1.</span></li>
+                <li><i class="fas fa-search"></i> <span>To check membership, hash the item and check if all corresponding bits are 1.</span></li>
+                <li><i class="fas fa-exclamation-triangle"></i> <span>If any bit is 0, the item is definitely not in the set. If all are 1, the item is possibly in the set (false positives possible).</span></li>
+            </ul>
+        </div>
+        <div class="divider"></div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card type-card p-3 h-100">
+                    <h3><i class="fas fa-filter me-2"></i>Standard Bloom Filter</h3>
+                    <p>Classic implementation using a fixed-size bit array and multiple hash functions. Efficient for static sets where the number of elements is known in advance.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card type-card p-3 h-100" style="border-left-color:#22c55e;">
+                    <h3 style="color:#22c55e"><i class="fas fa-expand-arrows-alt me-2"></i>Scalable Bloom Filter</h3>
+                    <p>Automatically grows in size to accommodate more elements while maintaining a low false positive rate. Ideal for dynamic or unknown set sizes.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card type-card p-3 h-100" style="border-left-color:#ef4444;">
+                    <h3 style="color:#ef4444"><i class="fas fa-th-large me-2"></i>Partitioned Bloom Filter</h3>
+                    <p>Splits the filter into multiple partitions, each with its own hash function. Can improve performance and reduce false positives in some scenarios.</p>
+                </div>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="card p-4 mb-4">
+            <h2 class="section-title"><i class="fas fa-table"></i> Comparison Table</h2>
+            <table class="table comparison-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Resizable</th>
+                        <th>False Positive Rate</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Standard</td>
+                        <td>No</td>
+                        <td>Fixed, tunable</td>
+                        <td>Static sets, known size</td>
+                    </tr>
+                    <tr>
+                        <td>Scalable</td>
+                        <td>Yes</td>
+                        <td>Low, maintained as set grows</td>
+                        <td>Dynamic/unknown set size</td>
+                    </tr>
+                    <tr>
+                        <td>Partitioned</td>
+                        <td>Usually No</td>
+                        <td>Lower in some cases</td>
+                        <td>Parallelism, reducing hash collisions</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="divider"></div>
+        <div class="card p-4 mb-4">
+            <h2 class="section-title"><i class="fas fa-lightbulb"></i> Real-World Use Cases</h2>
+            <ul class="use-case-list">
+                <li>Web browsers and proxies: Checking if URLs are in a blacklist (e.g., Google Safe Browsing)</li>
+                <li>Databases: Quickly checking if a key might exist before querying disk (e.g., Cassandra, Bigtable)</li>
+                <li>Bioinformatics: Fast k-mer membership queries in DNA sequence analysis</li>
+                <li>Distributed systems: Caching, duplicate detection, and network packet filtering</li>
+                <li>Spell checkers and search engines: Fast dictionary lookups</li>
+            </ul>
+        </div>
+        <div class="divider"></div>
+        <div class="card p-4 mb-4">
+            <h2 class="section-title"><i class="fas fa-flag-checkered"></i> Key Takeaways</h2>
+            <ul>
+                <li>Bloom filters are fast, memory-efficient, and allow for a tunable false positive rate.</li>
+                <li>Choose the type based on your dataset size and whether it changes over time.</li>
+                <li>They are widely used in bioinformatics, databases, and networking for quick set membership tests.</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        // Dark mode toggle with persistence
+        const darkToggle = document.getElementById('darkToggle');
+        function setDarkMode(enabled) {
+            if (enabled) {
+                document.body.classList.add('dark-mode');
+                darkToggle.querySelector('i').classList.remove('fa-moon');
+                darkToggle.querySelector('i').classList.add('fa-sun');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                document.body.classList.remove('dark-mode');
+                darkToggle.querySelector('i').classList.remove('fa-sun');
+                darkToggle.querySelector('i').classList.add('fa-moon');
+                localStorage.setItem('darkMode', 'false');
+            }
+        }
+        // On load, set mode from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const dark = localStorage.getItem('darkMode') === 'true';
+            setDarkMode(dark);
+        });
+        darkToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            setDarkMode(!isDark);
+        });
+    </script>
+</body>
+</html> 
