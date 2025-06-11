@@ -3,6 +3,6 @@ pybloom-live==4.0.0
 numpy==1.26.4
 matplotlib==3.8.3
 psutil==5.9.8
-mmh3==4.0.1
 Werkzeug==3.0.1
-pandas==2.2.1 
+pandas==2.2.1
+plotly==5.19.0 

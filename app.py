@@ -1,7 +1,7 @@
 import os
 import time
 import psutil
-import mmh3
+import hashlib
 import numpy as np
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.utils import secure_filename
@@ -195,6 +195,10 @@ def create_performance_plots(metrics):
         'memory_plot': json.dumps(memory_fig, cls=plotly.utils.PlotlyJSONEncoder),
         'fpr_plot': json.dumps(fpr_fig, cls=plotly.utils.PlotlyJSONEncoder)
     }
+
+def hash_function(data):
+    """Custom hash function using hashlib"""
+    return int(hashlib.md5(str(data).encode()).hexdigest(), 16)
 
 @app.route('/')
 def index():
