@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloom Filter DNA Analysis</title>
+    <title>DNA Sequence Bloom Filter Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
             --primary-color: #4B5563;
@@ -275,6 +275,56 @@
             from { opacity: 0; transform: translateY(40px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .recommendation-card {
+            background: var(--gradient);
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s;
+        }
+        
+        body.dark-mode .recommendation-card {
+            background: var(--gradient-dark);
+        }
+        
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .recommendation-card h6 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .recommendation-card p {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            margin-top: 1rem;
+            min-height: 400px;
+        }
+        
+        body.dark-mode .chart-container {
+            background: #232526;
+        }
     </style>
 </head>
 <body>
@@ -296,7 +346,7 @@
     </div>
     <div class="container py-5">
         <div class="d-flex flex-column align-items-center mb-4">
-            <h1 class="text-center">Bloom Filter DNA Analysis</h1>
+            <h1 class="text-center">DNA Sequence Bloom Filter Analysis</h1>
             <button class="btn btn-clear mt-3" id="clearBtn" style="display: none;">
                 <i class="fas fa-trash-alt me-2"></i>Clear Data
             </button>
@@ -355,6 +405,29 @@
         <div class="results-section" id="resultsSection">
             <div class="row justify-content-center">
                 <div class="col-md-10">
+                    <!-- K-mer Analysis Section -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>K-mer Analysis</h5>
+                            <div id="kmerAnalysisSection" style="display: none;">
+                                <div class="recommendations mb-4">
+                                    <div class="recommendation-card">
+                                        <h6><i class="fas fa-fingerprint me-2"></i>Best for Uniqueness</h6>
+                                        <p id="uniquenessText"></p>
+                                    </div>
+                                    <div class="recommendation-card">
+                                        <h6><i class="fas fa-expand me-2"></i>Best for Coverage</h6>
+                                        <p id="coverageText"></p>
+                                    </div>
+                                    <div class="recommendation-card">
+                                        <h6><i class="fas fa-balance-scale me-2"></i>Best Practical Choice</h6>
+                                        <p id="practicalText"></p>
+                                    </div>
+                                </div>
+                                <div id="kmerPlot" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Performance Metrics -->
                     <div class="card mb-4">
                         <div class="card-body">
@@ -384,6 +457,7 @@
                 </div>
             </div>
         </div>
+
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -578,23 +652,57 @@
             const resultsTable = document.getElementById('resultsTable');
             resultsSection.style.display = 'block';
             resultsTable.innerHTML = '';
+            
             // Update table
             Object.entries(data.results).forEach(([type, metrics]) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>${type.charAt(0).toUpperCase() + type.slice(1)}</strong></td>
                     <td>${metrics.insert_time !== undefined ? metrics.insert_time.toFixed(4) : '-'}</td>
-                    <td>-</td>
+                    <td>${metrics.search_time !== undefined ? metrics.search_time.toFixed(4) : '-'}</td>
                     <td>${metrics.memory !== undefined ? metrics.memory.toFixed(2) : '-'}</td>
                     <td>${metrics.false_positives !== undefined ? metrics.false_positives : '-'}</td>
                     <td>${metrics.false_positive_rate !== undefined ? (metrics.false_positive_rate * 100).toFixed(2) + '%' : '-'}</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
+                    <td>${metrics.found !== undefined ? (metrics.found ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>') : '-'}</td>
+                    <td>${metrics.matches !== undefined ? `<span class="badge badge-info">${metrics.matches}</span>` : '-'}</td>
+                    <td>${metrics.match_percentage !== undefined ? `<span class="badge badge-warning">${metrics.match_percentage.toFixed(1)}%</span>` : '-'}</td>
+                    <td>${metrics.total_kmers !== undefined ? metrics.total_kmers : '-'}</td>
                 `;
                 resultsTable.appendChild(row);
             });
+
+            // Display k-mer analysis if available
+            const kmerAnalysisSection = document.getElementById('kmerAnalysisSection');
+            if (data.kmer_analysis) {
+                kmerAnalysisSection.style.display = 'block';
+                
+                // Update recommendation texts
+                if (data.kmer_analysis.recommendations) {
+                    document.getElementById('uniquenessText').textContent = data.kmer_analysis.recommendations.explanation.uniqueness;
+                    document.getElementById('coverageText').textContent = data.kmer_analysis.recommendations.explanation.coverage;
+                    document.getElementById('practicalText').textContent = data.kmer_analysis.recommendations.explanation.practical;
+                }
+                
+                // Display k-mer plot
+                if (data.kmer_analysis.plot) {
+                    Plotly.newPlot('kmerPlot', 
+                        data.kmer_analysis.plot.data,
+                        {
+                            ...data.kmer_analysis.plot.layout,
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            font: {
+                                family: 'Inter, sans-serif',
+                                color: document.body.classList.contains('dark-mode') ? '#f1f1f1' : '#4B5563'
+                            },
+                            margin: { t: 30, r: 20, b: 40, l: 40 }
+                        },
+                        { responsive: true }
+                    );
+                }
+            } else {
+                kmerAnalysisSection.style.display = 'none';
+            }
         }
         // Function to save results to storage
         function saveResultsToStorage(data) {
@@ -806,6 +914,74 @@
             // Clear sessionStorage
             sessionStorage.removeItem('bloomFilterResults');
         });
+
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const kmerSize = document.getElementById('kValue').value;
+
+            if (!fileInput.files[0]) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('k_value', kmerSize);
+
+            // Show loading state
+            document.getElementById('kmer-plot').innerHTML = 'Loading analysis...';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                // Display k-mer analysis
+                if (data.kmer_analysis) {
+                    const optimalKInfo = document.getElementById('optimal-k-info');
+                    optimalKInfo.style.display = 'block';
+                    
+                    // Update recommendation texts
+                    if (data.kmer_analysis.recommendations) {
+                        document.getElementById('uniqueness-text').textContent = 
+                            data.kmer_analysis.recommendations.explanation.uniqueness;
+                        document.getElementById('coverage-text').textContent = 
+                            data.kmer_analysis.recommendations.explanation.coverage;
+                        document.getElementById('practical-text').textContent = 
+                            data.kmer_analysis.recommendations.explanation.practical;
+                    }
+                    
+                    // Display the plot
+                    if (data.kmer_analysis.plot) {
+                        const plotElement = document.getElementById('kmer-plot');
+                        plotElement.innerHTML = ''; // Clear loading message
+                        Plotly.newPlot('kmer-plot', 
+                            data.kmer_analysis.plot.data, 
+                            data.kmer_analysis.plot.layout,
+                            {responsive: true}
+                        );
+                    }
+                }
+
+                // Display performance plots
+                if (data.plots) {
+                    Plotly.newPlot('time-plot', JSON.parse(data.plots.time_plot));
+                    Plotly.newPlot('memory-plot', JSON.parse(data.plots.memory_plot));
+                    Plotly.newPlot('fpr-plot', JSON.parse(data.plots.fpr_plot));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('kmer-plot').innerHTML = 'Error loading analysis';
+                alert('An error occurred while uploading the file');
+            });
+        }
     </script>
 </body>
 </html> 

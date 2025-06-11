@@ -200,6 +200,153 @@ def hash_function(data):
     """Custom hash function using hashlib"""
     return int(hashlib.md5(str(data).encode()).hexdigest(), 16)
 
+def analyze_kmer_sizes(sequence, min_k=5, max_k=20):
+    """Analyze different k-mer sizes and their characteristics."""
+    results = []
+    sequence = clean_sequence(sequence)
+    
+    for k in range(min_k, max_k + 1):
+        kmers = set()
+        for i in range(len(sequence) - k + 1):
+            kmer = sequence[i:i + k]
+            if len(kmer) == k:
+                kmers.add(kmer)
+        
+        # Calculate metrics
+        total_possible = len(sequence) - k + 1
+        unique_kmers = len(kmers)
+        if total_possible > 0:
+            uniqueness_ratio = unique_kmers / total_possible
+            coverage_ratio = unique_kmers / (4**k)  # Coverage compared to all possible k-mers
+            # Calculate a score that balances uniqueness and practical usability
+            practical_score = uniqueness_ratio * (1 - (k / max_k))  # Penalize very large k values
+        else:
+            uniqueness_ratio = 0
+            coverage_ratio = 0
+            practical_score = 0
+        
+        results.append({
+            'k_size': k,
+            'total_kmers': total_possible,
+            'unique_kmers': unique_kmers,
+            'uniqueness_ratio': uniqueness_ratio,
+            'coverage_ratio': coverage_ratio,
+            'practical_score': practical_score
+        })
+    
+    # Find best k-mer sizes for different criteria
+    best_uniqueness = max(results, key=lambda x: x['uniqueness_ratio'])
+    best_coverage = max(results, key=lambda x: x['coverage_ratio'])
+    best_practical = max(results, key=lambda x: x['practical_score'])
+    
+    return {
+        'analysis': results,
+        'recommendations': {
+            'best_uniqueness': best_uniqueness['k_size'],
+            'best_coverage': best_coverage['k_size'],
+            'best_practical': best_practical['k_size'],
+            'explanation': {
+                'uniqueness': f"K={best_uniqueness['k_size']} gives highest uniqueness ratio of {best_uniqueness['uniqueness_ratio']:.2%}",
+                'coverage': f"K={best_coverage['k_size']} gives best coverage of {best_coverage['coverage_ratio']:.2%}",
+                'practical': f"K={best_practical['k_size']} gives best balance of uniqueness and practicality"
+            }
+        }
+    }
+
+def create_kmer_analysis_plot(kmer_data):
+    """Create a plot showing k-mer size analysis."""
+    analysis = kmer_data['analysis']
+    recommendations = kmer_data['recommendations']
+    
+    k_sizes = [r['k_size'] for r in analysis]
+    uniqueness_ratios = [r['uniqueness_ratio'] * 100 for r in analysis]
+    coverage_ratios = [r['coverage_ratio'] * 100 for r in analysis]
+    practical_scores = [r['practical_score'] * 100 for r in analysis]
+    
+    # Create the plot data
+    data = [
+        {
+            'x': k_sizes,
+            'y': uniqueness_ratios,
+            'name': 'Uniqueness Ratio (%)',
+            'type': 'scatter',
+            'line': {'color': 'blue'},
+            'hovertemplate': 'K-mer size: %{x}<br>Uniqueness: %{y:.2f}%'
+        },
+        {
+            'x': k_sizes,
+            'y': coverage_ratios,
+            'name': 'Coverage Ratio (%)',
+            'type': 'scatter',
+            'line': {'color': 'red', 'dash': 'dash'},
+            'hovertemplate': 'K-mer size: %{x}<br>Coverage: %{y:.2f}%'
+        },
+        {
+            'x': k_sizes,
+            'y': practical_scores,
+            'name': 'Practical Score (%)',
+            'type': 'scatter',
+            'line': {'color': 'green', 'dash': 'dot'},
+            'hovertemplate': 'K-mer size: %{x}<br>Practical Score: %{y:.2f}%'
+        }
+    ]
+    
+    # Create layout
+    layout = {
+        'title': 'K-mer Size Analysis and Recommendations',
+        'xaxis': {
+            'title': 'K-mer Size',
+            'tickmode': 'linear',
+            'dtick': 1
+        },
+        'yaxis': {
+            'title': 'Percentage (%)',
+            'range': [0, 100]
+        },
+        'hovermode': 'x unified',
+        'showlegend': True,
+        'legend': {
+            'yanchor': 'top',
+            'y': 0.99,
+            'xanchor': 'left',
+            'x': 0.01
+        }
+    }
+    
+    # Add vertical lines for recommended k-mer sizes
+    shapes = []
+    annotations = []
+    colors = {'uniqueness': 'blue', 'coverage': 'red', 'practical': 'green'}
+    
+    y_positions = [95, 85, 75]  # Different y-positions for annotations
+    i = 0
+    for k_type, k_value in recommendations.items():
+        if isinstance(k_value, int):  # Skip the 'explanation' key
+            shapes.append({
+                'type': 'line',
+                'x0': k_value,
+                'x1': k_value,
+                'y0': 0,
+                'y1': 100,
+                'line': {
+                    'color': colors[k_type.split('_')[1]],
+                    'dash': 'dash'
+                }
+            })
+            annotations.append({
+                'x': k_value,
+                'y': y_positions[i],
+                'text': f"Best {k_type.split('_')[1]}: k={k_value}",
+                'showarrow': False,
+                'font': {'color': colors[k_type.split('_')[1]]}
+            })
+            i += 1
+    
+    layout['shapes'] = shapes
+    layout['annotations'] = annotations
+    
+    return {'data': data, 'layout': layout}
+
 @app.route('/')
 def index():
     latest_results_data.clear()
@@ -396,29 +543,26 @@ def upload_file():
         # Create performance plots
         plots = create_performance_plots(results)
         
-        # Clean up
-        if filepath and os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-                logger.debug("Temporary file removed")
-            except:
-                pass
+        # After processing the file content
+        kmer_analysis = analyze_kmer_sizes(content)
+        kmer_plot = create_kmer_analysis_plot(kmer_analysis)
         
-        # Store results, plots, and query_info in latest_results_data
-        latest_results_data['results'] = results
-        latest_results_data['plots'] = plots
-        latest_results_data['query_info'] = {
-            'sequence': first_seq if first_seq else 'Uploaded file',
-            'length': len(first_seq),
-            'kmer_size': k_value,
-            'total_kmers': len(kmers)
-        }
-        
-        return jsonify({
+        # Update the results dictionary with the complete analysis
+        results = {
             'message': f'Successfully processed {total_kmers} {k_value}-mers',
             'results': results,
-            'plots': plots
-        })
+            'plots': plots,
+            'kmer_analysis': {
+                'plot': kmer_plot,
+                'recommendations': kmer_analysis['recommendations'],
+                'analysis_data': kmer_analysis['analysis']
+            }
+        }
+        
+        # Store results in latest_results_data
+        latest_results_data.update(results)
+        
+        return jsonify(results)
         
     except Exception as e:
         logger.error(f"Unexpected error in upload_file: {str(e)}")
