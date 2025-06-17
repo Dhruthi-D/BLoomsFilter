@@ -10,9 +10,16 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
-            --primary-color: #4B5563;
-            --secondary-color: #6366F1;
-            --accent-color: #A5B4FC;
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+            --text-light: #ecf0f1;
+            --text-dark: #2c3e50;
             --background-color: #f8f9fa;
             --card-shadow: 0 4px 16px rgba(75, 85, 99, 0.08);
             --gradient: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%);
@@ -20,13 +27,14 @@
             --font-main: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
-            background: var(--background-color);
+            background-color: var(--light-bg);
+            color: var(--text-dark);
             font-family: var(--font-main);
             transition: background 0.3s, color 0.3s;
         }
         body.dark-mode {
-            background: #181a1b;
-            color: #f1f1f1;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
         }
         .container {
             max-width: 1200px;
@@ -89,7 +97,8 @@
             100% { transform: translateY(-10px); }
         }
         .btn-primary {
-            background: var(--gradient);
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             border: none;
             padding: 0.6rem 2rem;
             border-radius: 10px;
@@ -102,7 +111,8 @@
             gap: 0.5rem;
         }
         .btn-primary:hover {
-            background: var(--gradient-dark);
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
             color: #fff;
             transform: scale(1.04);
         }
@@ -183,7 +193,7 @@
             font-weight: 600;
         }
         .badge-success {
-            background: #22c55e;
+            background-color: var(--success-color);
             color: #fff;
         }
         .badge-danger {
@@ -191,11 +201,11 @@
             color: #fff;
         }
         .badge-info {
-            background: var(--secondary-color);
+            background-color: var(--info-color);
             color: #fff;
         }
         .badge-warning {
-            background: #fbbf24;
+            background-color: var(--warning-color);
             color: #222;
         }
         .chart-container {
@@ -325,6 +335,55 @@
         body.dark-mode .chart-container {
             background: #232526;
         }
+
+        /* Sequence Viewer Styles */
+        .sequence-viewer {
+            font-family: monospace;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .sequence-line {
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .position-numbers {
+            color: #666;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+
+        .match-highlight {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-radius: 2px;
+        }
+
+        .sequence-controls {
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Dark mode styles */
+        body.dark-mode .sequence-viewer {
+            background-color: var(--secondary-color);
+            color: var(--text-light);
+        }
+
+        body.dark-mode .position-numbers {
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
@@ -351,31 +410,38 @@
                 <i class="fas fa-trash-alt me-2"></i>Clear Data
             </button>
         </div>
-        <!-- File Upload Section -->
+        <!-- Upload Section -->
         <div class="row justify-content-center mb-5">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-dna me-2"></i>Upload DNA Sequence</h5>
-                        <div class="mb-3">
-                            <label for="kValue" class="form-label">K-mer Size
-                                <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose the length of k-mers to extract (between 5 and 20)"></i>
-                            </label>
-                            <input type="number" class="form-control" id="kValue" min="5" max="20" value="10" title="Enter k-mer size (5-20)">
-                            <div class="form-text">Choose k-mer size between 5 and 20</div>
-                        </div>
-                        <div class="upload-area" id="dropZone">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Drag and drop your file here or click to browse</p>
-                            <input type="file" id="fileInput" class="d-none" accept=".fasta,.txt,.csv">
-                            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                                Choose File
-                            </button>
-                        </div>
-                        <div class="progress mt-3" id="uploadProgress">
-                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-                        </div>
-                        <div class="alert alert-info mt-3" id="uploadMessage" style="display: none;"></div>
+                        <h5 class="card-title"><i class="fas fa-upload me-2"></i>Upload DNA Sequence File</h5>
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="fileInput" class="form-label">Select FASTA File</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="fileInput" accept=".fasta,.fa,.txt">
+                                    <button type="button" class="btn btn-primary" id="uploadButton">
+                                        <i class="fas fa-upload"></i> Upload
+                                    </button>
+                                </div>
+                                <div id="selectedFileName" class="mt-2 text-muted" style="display: none;">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    <span id="fileName"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeFile">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kValue" class="form-label">K-mer Size (5-20)</label>
+                                <input type="number" class="form-control" id="kValue" min="5" max="20" value="10">
+                            </div>
+                            <div class="progress mt-3" id="uploadProgress" style="display: none;">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="alert alert-info mt-3" id="uploadMessage" style="display: none;"></div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -454,6 +520,32 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Sequence Viewer -->
+                    <div class="card mb-4" id="sequenceViewer" style="display: none;">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-dna me-2"></i>Sequence Viewer</h5>
+                            <div class="sequence-controls">
+                                <div class="zoom-controls">
+                                    <button class="btn btn-sm btn-outline-secondary" id="zoomOut">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                    <span id="zoomLevel">100%</span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="zoomIn">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="position-toggle">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="showPositions" checked>
+                                        <label class="form-check-label" for="showPositions">Show Positions</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sequence-viewer">
+                                <div id="sequenceContent"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -499,92 +591,136 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
         // File Upload Handling
-        const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
         const uploadProgress = document.getElementById('uploadProgress');
         const progressBar = uploadProgress.querySelector('.progress-bar');
         const uploadMessage = document.getElementById('uploadMessage');
         const searchError = document.getElementById('searchError');
         const searchInfo = document.getElementById('searchInfo');
         const spinnerOverlay = document.getElementById('spinnerOverlay');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const fileNameSpan = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+
         // Show search info on input focus
         document.getElementById('searchInput').addEventListener('focus', () => {
             searchInfo.style.display = 'block';
         });
+
         // Hide search info on input blur if empty
         document.getElementById('searchInput').addEventListener('blur', () => {
             if (!document.getElementById('searchInput').value) {
                 searchInfo.style.display = 'none';
             }
         });
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.style.borderColor = '#0d6efd';
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.style.borderColor = '#ccc';
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.style.borderColor = '#ccc';
-            const files = e.dataTransfer.files;
-            handleFiles(files);
-        });
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
+
         function showSpinner(show) {
             spinnerOverlay.style.display = show ? 'flex' : 'none';
         }
-        function handleFiles(files) {
-            if (files.length === 0) return;
-            const file = files[0];
+
+        // File input change handler
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameSpan.textContent = file.name;
+                selectedFileName.style.display = 'block';
+            } else {
+                selectedFileName.style.display = 'none';
+            }
+        });
+
+        // Remove file handler
+        removeFile.addEventListener('click', function() {
+            fileInput.value = '';
+            selectedFileName.style.display = 'none';
+            uploadMessage.style.display = 'none';
+        });
+
+        // Upload button click handler
+        uploadButton.addEventListener('click', function() {
+            const file = fileInput.files[0];
+            const kValue = document.getElementById('kValue').value;
+
+            if (!file) {
+                uploadMessage.textContent = 'Please select a file first';
+                uploadMessage.className = 'alert alert-danger mt-3';
+                uploadMessage.style.display = 'block';
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['.fasta', '.fa', '.txt'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            if (!validTypes.includes(fileExtension)) {
+                uploadMessage.textContent = 'Invalid file type. Please upload a FASTA file (.fasta, .fa) or text file (.txt)';
+                uploadMessage.className = 'alert alert-danger mt-3';
+                uploadMessage.style.display = 'block';
+                return;
+            }
+
+            // Validate k-value
+            const k = parseInt(kValue);
+            if (isNaN(k) || k < 5 || k > 20) {
+                uploadMessage.textContent = 'Please enter a valid k-value between 5 and 20';
+                uploadMessage.className = 'alert alert-danger mt-3';
+                uploadMessage.style.display = 'block';
+                return;
+            }
+
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('k_value', document.getElementById('kValue').value);
+            formData.append('k_value', k);
+
+            // Show loading state
+            uploadMessage.textContent = 'Uploading and analyzing file...';
+            uploadMessage.className = 'alert alert-info mt-3';
+            uploadMessage.style.display = 'block';
             uploadProgress.style.display = 'block';
-            uploadMessage.style.display = 'none';
-            searchError.style.display = 'none';
+            progressBar.style.width = '0%';
             showSpinner(true);
+
             fetch('/upload', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
-                return response.json().catch(() => ({ error: 'Invalid server response' }));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
             })
             .then(data => {
-                console.log('Upload response:', data); // Debug log
-                if (data && typeof data === 'object') {
-                    if (data.error) {
-                        uploadMessage.textContent = data.error;
-                        uploadMessage.className = 'alert alert-danger mt-3';
-                    } else if (data.message) {
-                        uploadMessage.textContent = data.message;
-                        uploadMessage.className = 'alert alert-success mt-3';
-                        displayResults(data);
-                    } else {
-                        uploadMessage.textContent = 'Unexpected server response.';
-                        uploadMessage.className = 'alert alert-danger mt-3';
-                    }
-                } else {
-                    uploadMessage.textContent = 'Invalid server response (not JSON).';
-                    uploadMessage.className = 'alert alert-danger mt-3';
+                if (data.error) {
+                    throw new Error(data.error);
                 }
-                uploadMessage.style.display = 'block';
+                
+                uploadMessage.textContent = 'File uploaded and analyzed successfully!';
+                uploadMessage.className = 'alert alert-success mt-3';
+                progressBar.style.width = '100%';
+                
+                // Display results
+                displayResults(data);
+                
+                // Save results to storage
+                saveResultsToStorage(data);
+                
+                // Show the clear button
+                document.getElementById('clearBtn').style.display = 'flex';
             })
             .catch(error => {
                 console.error('Error:', error);
-                uploadMessage.textContent = 'An error occurred during upload';
+                uploadMessage.textContent = error.message || 'An error occurred during upload';
                 uploadMessage.className = 'alert alert-danger mt-3';
-                uploadMessage.style.display = 'block';
             })
             .finally(() => {
-                uploadProgress.style.display = 'none';
-                progressBar.style.width = '0%';
                 showSpinner(false);
+                setTimeout(() => {
+                    uploadProgress.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
             });
-        }
+        });
         // Search Handling
         document.getElementById('searchButton').addEventListener('click', () => {
             const query = document.getElementById('searchInput').value.trim();
@@ -646,6 +782,18 @@
                 resultsTable.appendChild(row);
             });
             // Update plots if new ones are provided (not needed on index page)
+            
+            // Add sequence viewer update
+            if (data.results && Object.values(data.results)[0]) {
+                const result = Object.values(data.results)[0];
+                if (result.matching_kmers) {
+                    const matches = result.matching_kmers.map(kmer => ({
+                        start: kmer.positions[0],
+                        end: kmer.positions[0] + kmer.kmer.length
+                    }));
+                    updateSequenceViewer(result.query_sequence, matches);
+                }
+            }
         }
         function displayResults(data) {
             const resultsSection = document.getElementById('resultsSection');
@@ -910,73 +1058,72 @@
             sessionStorage.removeItem('bloomFilterResults');
         });
 
-        function uploadFile() {
-            const fileInput = document.getElementById('fileInput');
-            const kmerSize = document.getElementById('kValue').value;
-
-            if (!fileInput.files[0]) {
-                alert('Please select a file first');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('k_value', kmerSize);
-
-            // Show loading state
-            document.getElementById('kmer-plot').innerHTML = 'Loading analysis...';
-
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
+        function updateSequenceViewer(sequence, matches) {
+            const viewer = document.getElementById('sequenceViewer');
+            const content = document.getElementById('sequenceContent');
+            viewer.style.display = 'block';
+            
+            // Clear previous content
+            content.innerHTML = '';
+            
+            // Create sequence lines with position numbers
+            const lineLength = 80;
+            const showPositions = document.getElementById('showPositions').checked;
+            
+            for (let i = 0; i < sequence.length; i += lineLength) {
+                const line = document.createElement('div');
+                line.className = 'sequence-line';
+                
+                // Add position numbers if enabled
+                if (showPositions) {
+                    const positionSpan = document.createElement('span');
+                    positionSpan.className = 'position-numbers';
+                    positionSpan.textContent = `${i + 1}`.padStart(5, ' ');
+                    line.appendChild(positionSpan);
                 }
                 
-                // Display k-mer analysis
-                if (data.kmer_analysis) {
-                    const optimalKInfo = document.getElementById('optimal-k-info');
-                    optimalKInfo.style.display = 'block';
-                    
-                    // Update recommendation texts
-                    if (data.kmer_analysis.recommendations) {
-                        document.getElementById('uniqueness-text').textContent = 
-                            data.kmer_analysis.recommendations.explanation.uniqueness;
-                        document.getElementById('coverage-text').textContent = 
-                            data.kmer_analysis.recommendations.explanation.coverage;
-                        document.getElementById('practical-text').textContent = 
-                            data.kmer_analysis.recommendations.explanation.practical;
-                    }
-                    
-                    // Display the plot
-                    if (data.kmer_analysis.plot) {
-                        const plotElement = document.getElementById('kmer-plot');
-                        plotElement.innerHTML = ''; // Clear loading message
-                        Plotly.newPlot('kmer-plot', 
-                            data.kmer_analysis.plot.data, 
-                            data.kmer_analysis.plot.layout,
-                            {responsive: true}
-                        );
+                // Add sequence characters
+                const sequenceSpan = document.createElement('span');
+                let sequenceText = '';
+                for (let j = 0; j < lineLength && i + j < sequence.length; j++) {
+                    const pos = i + j;
+                    const char = sequence[pos];
+                    if (matches.some(match => pos >= match.start && pos < match.end)) {
+                        sequenceText += `<span class="match-highlight">${char}</span>`;
+                    } else {
+                        sequenceText += char;
                     }
                 }
-
-                // Display performance plots
-                if (data.plots) {
-                    Plotly.newPlot('time-plot', JSON.parse(data.plots.time_plot));
-                    Plotly.newPlot('memory-plot', JSON.parse(data.plots.memory_plot));
-                    Plotly.newPlot('fpr-plot', JSON.parse(data.plots.fpr_plot));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('kmer-plot').innerHTML = 'Error loading analysis';
-                alert('An error occurred while uploading the file');
-            });
+                sequenceSpan.innerHTML = sequenceText;
+                line.appendChild(sequenceSpan);
+                content.appendChild(line);
+            }
         }
+
+        // Add zoom controls
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            const content = document.getElementById('sequenceContent');
+            const currentZoom = parseInt(content.style.fontSize) || 100;
+            content.style.fontSize = `${currentZoom + 10}%`;
+            document.getElementById('zoomLevel').textContent = `${currentZoom + 10}%`;
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            const content = document.getElementById('sequenceContent');
+            const currentZoom = parseInt(content.style.fontSize) || 100;
+            if (currentZoom > 50) {
+                content.style.fontSize = `${currentZoom - 10}%`;
+                document.getElementById('zoomLevel').textContent = `${currentZoom - 10}%`;
+            }
+        });
+
+        // Add position toggle
+        document.getElementById('showPositions').addEventListener('change', function() {
+            const positions = document.querySelectorAll('.position-numbers');
+            positions.forEach(pos => {
+                pos.style.display = this.checked ? 'inline' : 'none';
+            });
+        });
     </script>
 </body>
 </html> 

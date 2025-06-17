@@ -45,6 +45,18 @@ except Exception as e:
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+class KmerPositionTracker:
+    def __init__(self):
+        self.kmer_positions = {}  # Dictionary to store k-mer positions
+    
+    def add_kmer(self, kmer, position):
+        if kmer not in self.kmer_positions:
+            self.kmer_positions[kmer] = []
+        self.kmer_positions[kmer].append(position)
+    
+    def get_positions(self, kmer):
+        return self.kmer_positions.get(kmer, [])
+
 # Global variables
 bloom_filters = {
     'standard': None,
@@ -57,6 +69,7 @@ performance_metrics = {
     'partitioned': {'insert_time': 0, 'search_time': 0, 'memory': 0, 'false_positives': 0, 'false_positive_rate': 0}
 }
 k_value = 10  # Default k-value
+kmer_tracker = KmerPositionTracker()  # Add kmer position tracker
 
 # Store original kmers and metrics
 original_kmers = set()
@@ -111,6 +124,7 @@ def extract_kmers(sequence, k):
         kmer = sequence[i:i + k]
         if len(kmer) == k:  # Double check the length
             kmers.add(kmer)
+            kmer_tracker.add_kmer(kmer, i)  # Track position of each k-mer
     return kmers
 
 def generate_random_kmers(num_kmers, k):
@@ -574,6 +588,53 @@ def upload_file():
                 pass
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
+def get_sequence_context(sequence, position, k, context_size=10):
+    """Get the context around a k-mer match in the sequence."""
+    start = max(0, position - context_size)
+    end = min(len(sequence), position + k + context_size)
+    context = sequence[start:end]
+    
+    # Add indicators for the match
+    match_start = position - start
+    match_end = match_start + k
+    
+    return {
+        'context': context,
+        'match_start': match_start,
+        'match_end': match_end,
+        'position': position,
+        'absolute_position': position,  # Add absolute position
+        'relative_position': position - start  # Add relative position
+    }
+
+def visualize_matches(sequence, matches, k):
+    """Create a visualization of where matches occur in the sequence."""
+    # Create a list of positions where matches occur
+    match_positions = []
+    for match in matches:
+        match_positions.extend(match['positions'])
+    
+    # Create a visualization string with position information
+    vis = {
+        'sequence': sequence,
+        'matches': [],
+        'total_matches': len(match_positions)
+    }
+    
+    # Sort matches by position
+    match_positions.sort()
+    
+    # Add match information
+    for pos in match_positions:
+        vis['matches'].append({
+            'start': pos,
+            'end': pos + k,
+            'sequence': sequence[pos:pos + k],
+            'context': get_sequence_context(sequence, pos, k)
+        })
+    
+    return vis
+
 @app.route('/search', methods=['POST'])
 def search():
     global k_value
@@ -598,10 +659,25 @@ def search():
             if not kmers:
                 return jsonify({'error': f'No valid {k_value}-mers could be extracted from the query'}), 400
             
-            # Find matching k-mers
-            matching_kmers = [kmer for kmer in kmers if len(kmer) == k_value and kmer in filter_instance]
+            # Find matching k-mers and their positions
+            matching_kmers = []
+            for kmer in kmers:
+                if len(kmer) == k_value and kmer in filter_instance:
+                    positions = kmer_tracker.get_positions(kmer)
+                    # Get context for each position
+                    contexts = [get_sequence_context(query, pos, k_value) for pos in positions]
+                    matching_kmers.append({
+                        'kmer': kmer,
+                        'positions': positions,
+                        'contexts': contexts,
+                        'length': len(kmer)
+                    })
+            
             matches = len(matching_kmers)
             search_time = time.time() - start_time
+            
+            # Create enhanced visualization of matches
+            match_visualization = visualize_matches(query, matching_kmers, k_value)
             
             results[filter_type] = {
                 'search_time': search_time,
@@ -611,7 +687,20 @@ def search():
                 'found': matches > 0,
                 'matching_kmers': matching_kmers,
                 'query_length': len(query),
-                'kmer_size': k_value
+                'kmer_size': k_value,
+                'match_visualization': match_visualization,
+                'query_sequence': query,
+                'sequence_stats': {
+                    'gc_content': (query.count('G') + query.count('C')) / len(query) * 100 if query else 0,
+                    'length': len(query),
+                    'unique_bases': len(set(query)),
+                    'base_counts': {
+                        'A': query.count('A'),
+                        'C': query.count('C'),
+                        'G': query.count('G'),
+                        'T': query.count('T')
+                    }
+                }
             }
             
             # Merge with previous metrics to ensure all columns are present
@@ -629,21 +718,19 @@ def search():
             'sequence': query,
             'length': len(query),
             'kmer_size': k_value,
-            'total_kmers': len(kmers)
+            'total_kmers': len(kmers),
+            'sequence_stats': results[list(results.keys())[0]]['sequence_stats']
         }
         
         return jsonify({
             'results': results,
             'plots': plots,
-            'query_info': {
-                'sequence': query,
-                'length': len(query),
-                'kmer_size': k_value,
-                'total_kmers': len(kmers)
-            }
+            'query_info': latest_results_data['query_info']
         })
         
     except Exception as e:
+        logger.error(f"Error in search: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
 @app.route('/know-more')
