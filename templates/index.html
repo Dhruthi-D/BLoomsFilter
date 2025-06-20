@@ -6,41 +6,38 @@
     <title>DNA Sequence Bloom Filter Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #e74c3c;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --info-color: #3498db;
-            --light-bg: #f8f9fa;
-            --dark-bg: #2c3e50;
-            --text-light: #ecf0f1;
-            --text-dark: #2c3e50;
-            --background-color: #f8f9fa;
-            --card-shadow: 0 4px 16px rgba(75, 85, 99, 0.08);
-            --gradient: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%);
-            --gradient-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
-            --font-main: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --primary: #14b8a6;
+            --secondary: #f59e42;
+            --accent: #fbbf24;
+            --background: #f9fafb;
+            --surface: #fff;
+            --text: #1e293b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --border-radius: 10px;
+            --shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+            --font-main: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
         }
         body {
-            background-color: var(--light-bg);
-            color: var(--text-dark);
+            background-color: var(--background);
+            color: var(--text);
             font-family: var(--font-main);
             transition: background 0.3s, color 0.3s;
         }
         body.dark-mode {
-            background-color: var(--dark-bg);
-            color: var(--text-light);
+            background-color: #181f2a;
+            color: #f1f5f9;
         }
         .container {
             max-width: 1200px;
         }
-        h1 {
-            color: var(--primary-color);
+        h1, h5.card-title {
+            color: var(--primary);
             font-weight: 700;
             margin-bottom: 2rem;
             letter-spacing: 1px;
@@ -50,126 +47,111 @@
         }
         .card {
             border: none;
-            border-radius: 18px;
-            box-shadow: var(--card-shadow);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             margin-bottom: 1.5rem;
-            background: var(--gradient);
-            color: #222;
-            animation: fadeInUp 0.7s;
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
         }
         .card:hover {
-            transform: translateY(-6px) scale(1.01);
-            box-shadow: 0 8px 32px rgba(75, 85, 99, 0.15);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.10);
         }
         body.dark-mode .card {
-            background: var(--gradient-dark);
-            color: #f1f1f1;
+            background: #232a36;
+            color: #f1f5f9;
         }
         .card-title {
-            color: var(--primary-color);
+            color: var(--primary);
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
         .upload-area {
-            border: 2px dashed var(--secondary-color);
-            border-radius: 15px;
+            border: 2px dashed var(--secondary);
+            border-radius: var(--border-radius);
             padding: 2rem;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(99, 102, 241, 0.07);
-            animation: fadeIn 1s;
+            background: rgba(37, 99, 235, 0.07);
         }
         .upload-area:hover {
-            background: rgba(99, 102, 241, 0.15);
-            border-color: var(--primary-color);
-            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+            background: rgba(37, 99, 235, 0.13);
+            border-color: var(--primary);
+            box-shadow: 0 2px 12px rgba(37, 99, 235, 0.08);
         }
         .upload-area i {
-            color: var(--secondary-color);
+            color: var(--secondary);
             margin-bottom: 1rem;
             font-size: 2.2rem;
-            animation: bounce 1.5s infinite alternate;
-        }
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-10px); }
         }
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--primary);
+            border-color: var(--primary);
             border: none;
             padding: 0.6rem 2rem;
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
         .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            background-color: var(--accent);
+            border-color: var(--accent);
             color: #fff;
             transform: scale(1.04);
         }
         .form-control {
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             border: 1.5px solid #dee2e6;
             padding: 0.85rem;
             font-size: 1.1rem;
             transition: border 0.3s, box-shadow 0.3s;
         }
         .form-control:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.18);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.18);
         }
         .input-group-text {
-            background: var(--gradient);
+            background: var(--primary);
             color: #fff;
             border: none;
         }
         .search-info {
-            background: rgba(99, 102, 241, 0.07);
+            background: rgba(37, 99, 235, 0.07);
             padding: 1rem;
             border-radius: 8px;
             margin-top: 1rem;
             font-size: 0.98rem;
         }
         body.dark-mode .search-info {
-            background: rgba(99, 102, 241, 0.18);
-            color: #f1f1f1;
-        }
-        body.dark-mode .search-info .fa-info-circle,
-        body.dark-mode .search-info small,
-        body.dark-mode .search-info .text-muted {
-            color: #f1f1f1 !important;
+            background: rgba(37, 99, 235, 0.18);
+            color: #f1f5f9;
         }
         .progress {
             height: 10px;
             border-radius: 5px;
-            background: rgba(99, 102, 241, 0.13);
+            background: rgba(37, 99, 235, 0.13);
         }
         .progress-bar {
-            background: var(--gradient);
+            background: var(--primary);
         }
         .alert {
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             border: none;
             font-size: 1.05rem;
         }
         .table {
-            border-radius: 12px;
+            border-radius: var(--border-radius);
             overflow: hidden;
-            background: #fff;
+            background: var(--surface);
             margin-bottom: 0;
-            animation: fadeIn 1.2s;
         }
         .table thead th {
-            background: var(--primary-color);
+            background: var(--primary);
             color: #fff;
             font-weight: 600;
             border: none;
@@ -184,7 +166,7 @@
             background: #f3f8fa;
         }
         .table tbody tr:hover {
-            background: rgba(99, 102, 241, 0.09);
+            background: rgba(37, 99, 235, 0.09);
         }
         .badge {
             font-size: 0.95em;
@@ -193,39 +175,38 @@
             font-weight: 600;
         }
         .badge-success {
-            background-color: var(--success-color);
+            background-color: var(--success);
             color: #fff;
         }
         .badge-danger {
-            background: #ef4444;
+            background: var(--danger);
             color: #fff;
         }
         .badge-info {
-            background-color: var(--info-color);
+            background-color: var(--info);
             color: #fff;
         }
         .badge-warning {
-            background-color: var(--warning-color);
+            background-color: var(--accent);
             color: #222;
         }
         .chart-container {
             margin-top: 1.5rem;
             height: 450px;
-            border-radius: 10px;
-            background: #fff;
+            border-radius: var(--border-radius);
+            background: var(--surface);
             padding: 1rem;
-            animation: fadeIn 1.2s;
         }
         body.dark-mode .chart-container, body.dark-mode .table {
-            background: #232526;
-            color: #f1f1f1;
+            background: #232a36;
+            color: #f1f5f9;
         }
         .dark-toggle {
             position: fixed;
             top: 30px;
             right: 40px;
             z-index: 1000;
-            background: var(--gradient);
+            background: var(--primary);
             color: #fff;
             border: none;
             border-radius: 50%;
@@ -235,18 +216,18 @@
             align-items: center;
             justify-content: center;
             font-size: 1.6rem;
-            box-shadow: 0 2px 8px rgba(75, 85, 99, 0.13);
+            box-shadow: 0 2px 8px rgba(30, 41, 59, 0.13);
             cursor: pointer;
             transition: background 0.3s, color 0.3s;
         }
         .dark-toggle:hover {
-            background: var(--gradient-dark);
-            color: #f1c40f;
+            background: var(--accent);
+            color: #fff;
         }
         .spinner-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(75, 85, 99, 0.12);
+            background: rgba(30, 41, 59, 0.12);
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -259,22 +240,22 @@
             border-width: 0.5em;
         }
         .btn-clear {
-            background: var(--gradient-dark);
+            background: var(--secondary);
             color: #fff;
             border: none;
             padding: 0.6rem 2rem;
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(75, 85, 99, 0.13);
+            box-shadow: 0 2px 8px rgba(30, 41, 59, 0.13);
             display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-left: 1rem;
         }
         .btn-clear:hover {
-            background: #dc3545;
+            background: var(--danger);
             transform: scale(1.04);
         }
         @keyframes fadeIn {
@@ -291,24 +272,20 @@
             gap: 1rem;
             margin-bottom: 2rem;
         }
-        
         .recommendation-card {
-            background: var(--gradient);
+            background: var(--primary);
             color: #fff;
             padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             transition: transform 0.3s;
         }
-        
         body.dark-mode .recommendation-card {
-            background: var(--gradient-dark);
+            background: var(--secondary);
         }
-        
         .recommendation-card:hover {
             transform: translateY(-5px);
         }
-        
         .recommendation-card h6 {
             font-weight: 600;
             margin-bottom: 1rem;
@@ -316,73 +293,50 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
         .recommendation-card p {
             margin: 0;
             font-size: 0.95rem;
             opacity: 0.9;
         }
-        
         .chart-container {
-            background: #fff;
-            border-radius: 12px;
+            background: var(--surface);
+            border-radius: var(--border-radius);
             padding: 1.5rem;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow);
             margin-top: 1rem;
             min-height: 400px;
         }
-        
         body.dark-mode .chart-container {
-            background: #232526;
+            background: #232a36;
         }
-
-        /* Sequence Viewer Styles */
-        .sequence-viewer {
-            font-family: monospace;
-            background-color: white;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow-x: auto;
+        .match-context-table {
+            font-family: 'Fira Mono', 'Consolas', monospace;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+            table-layout: auto;
         }
-
-        .sequence-line {
-            white-space: pre;
-            line-height: 1.5;
+        .match-context-table th, .match-context-table td {
+            border: 1px solid #ccc;
+            padding: 0.4em 0.7em;
+            font-size: 1em;
+            white-space: pre-line;
+            word-break: break-all;
+            text-align: left;
+            vertical-align: middle;
+            background: #fff;
         }
-
-        .position-numbers {
-            color: #666;
-            font-size: 0.8em;
-            margin-right: 10px;
+        .match-context-table th {
+            background: #2c3e50;
+            color: #fff;
         }
-
-        .match-highlight {
-            background-color: rgba(231, 76, 60, 0.2);
-            border-radius: 2px;
-        }
-
-        .sequence-controls {
-            margin: 10px 0;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .zoom-controls {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Dark mode styles */
-        body.dark-mode .sequence-viewer {
-            background-color: var(--secondary-color);
-            color: var(--text-light);
-        }
-
-        body.dark-mode .position-numbers {
-            color: #aaa;
+        .match-context-highlight {
+            background: #ffe066;
+            color: #222;
+            border-radius: 3px;
+            padding: 0 2px;
+            font-weight: bold;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -520,29 +474,12 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Sequence Viewer -->
-                    <div class="card mb-4" id="sequenceViewer" style="display: none;">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-dna me-2"></i>Sequence Viewer</h5>
-                            <div class="sequence-controls">
-                                <div class="zoom-controls">
-                                    <button class="btn btn-sm btn-outline-secondary" id="zoomOut">
-                                        <i class="fas fa-search-minus"></i>
-                                    </button>
-                                    <span id="zoomLevel">100%</span>
-                                    <button class="btn btn-sm btn-outline-secondary" id="zoomIn">
-                                        <i class="fas fa-search-plus"></i>
-                                    </button>
-                                </div>
-                                <div class="position-toggle">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="showPositions" checked>
-                                        <label class="form-check-label" for="showPositions">Show Positions</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="sequence-viewer">
-                                <div id="sequenceContent"></div>
+                    <!-- Add this after the results table in the results section -->
+                    <div id="matchContextSection" style="display:none; margin-top: 1.5rem;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-map-marker-alt me-2"></i>Match Context</h5>
+                                <div id="matchContextContent"></div>
                             </div>
                         </div>
                     </div>
@@ -761,9 +698,23 @@
                 searchError.style.display = 'block';
             });
         });
+        function getContextSnippet(line, start, end, window=10) {
+            const snippetStart = Math.max(0, start - window);
+            const snippetEnd = Math.min(line.length, end + window);
+            let prefix = snippetStart > 0 ? '...' : '';
+            let suffix = snippetEnd < line.length ? '...' : '';
+            return (
+                prefix +
+                line.substring(snippetStart, start) +
+                '<span class="match-context-highlight">' +
+                line.substring(start, end) +
+                '</span>' +
+                line.substring(end, snippetEnd) +
+                suffix
+            );
+        }
         function updateSearchResults(data) {
             const resultsTable = document.getElementById('resultsTable');
-            // Rebuild the table with all merged metrics (like displayResults)
             resultsTable.innerHTML = '';
             Object.entries(data.results).forEach(([type, metrics]) => {
                 const row = document.createElement('tr');
@@ -781,19 +732,56 @@
                 `;
                 resultsTable.appendChild(row);
             });
-            // Update plots if new ones are provided (not needed on index page)
-            
-            // Add sequence viewer update
-            if (data.results && Object.values(data.results)[0]) {
-                const result = Object.values(data.results)[0];
-                if (result.matching_kmers) {
-                    const matches = result.matching_kmers.map(kmer => ({
-                        start: kmer.positions[0],
-                        end: kmer.positions[0] + kmer.kmer.length
-                    }));
-                    updateSequenceViewer(result.query_sequence, matches);
+
+            // Show match context as a table
+            const matchContextSection = document.getElementById('matchContextSection');
+            const matchContextContent = document.getElementById('matchContextContent');
+            matchContextContent.innerHTML = '';
+            let hasAny = false;
+
+            Object.entries(data.results).forEach(([type, metrics]) => {
+                if (metrics.match_visualization && metrics.match_visualization.matches.length > 0) {
+                    hasAny = true;
+                    const filterName = type.charAt(0).toUpperCase() + type.slice(1);
+                    let tableRows = metrics.match_visualization.matches.slice(0, 10).map((m, idx) => (
+                        m.line_info && m.line_info.line_number !== undefined && m.line_info.line_sequence
+                        ? `<tr>
+                                <td>${idx + 1}</td>
+                                <td>${m.line_info.line_number}</td>
+                                <td>${m.line_info.start + 1}</td>
+                                <td><span class="match-context-highlight">${m.line_info.line_sequence.substring(m.line_info.start, m.line_info.end)}</span></td>
+                                <td>${getContextSnippet(m.line_info.line_sequence, m.line_info.start, m.line_info.end)}</td>
+                            </tr>`
+                        : ''
+                    )).join('');
+                    matchContextContent.innerHTML += `
+                        <div style="margin-bottom: 1em;">
+                            <strong>${filterName}:</strong>
+                            <div style="font-size:0.97em; color:#444; margin-bottom:0.3em;">
+                                <i class="fas fa-info-circle"></i>
+                                Showing up to 10 matches. <b>Line</b>: line number in file. <b>Position</b>: start index (1-based). <b>Matched Sequence</b>: exact match. <b>Context</b>: snippet with match highlighted.
+                            </div>
+                            <table class="table table-sm table-bordered match-context-table" style="margin-top:0.5em;">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Line</th>
+                                        <th>Position</th>
+                                        <th>Matched Sequence</th>
+                                        <th>Context</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                            ${metrics.match_visualization.matches.length > 10 ? `<div class="text-muted" style="font-size:0.9em;">Showing first 10 of ${metrics.match_visualization.matches.length} matches.</div>` : ''}
+                        </div>
+                    `;
                 }
-            }
+            });
+
+            matchContextSection.style.display = hasAny ? 'block' : 'none';
         }
         function displayResults(data) {
             const resultsSection = document.getElementById('resultsSection');
@@ -1056,73 +1044,6 @@
             
             // Clear sessionStorage
             sessionStorage.removeItem('bloomFilterResults');
-        });
-
-        function updateSequenceViewer(sequence, matches) {
-            const viewer = document.getElementById('sequenceViewer');
-            const content = document.getElementById('sequenceContent');
-            viewer.style.display = 'block';
-            
-            // Clear previous content
-            content.innerHTML = '';
-            
-            // Create sequence lines with position numbers
-            const lineLength = 80;
-            const showPositions = document.getElementById('showPositions').checked;
-            
-            for (let i = 0; i < sequence.length; i += lineLength) {
-                const line = document.createElement('div');
-                line.className = 'sequence-line';
-                
-                // Add position numbers if enabled
-                if (showPositions) {
-                    const positionSpan = document.createElement('span');
-                    positionSpan.className = 'position-numbers';
-                    positionSpan.textContent = `${i + 1}`.padStart(5, ' ');
-                    line.appendChild(positionSpan);
-                }
-                
-                // Add sequence characters
-                const sequenceSpan = document.createElement('span');
-                let sequenceText = '';
-                for (let j = 0; j < lineLength && i + j < sequence.length; j++) {
-                    const pos = i + j;
-                    const char = sequence[pos];
-                    if (matches.some(match => pos >= match.start && pos < match.end)) {
-                        sequenceText += `<span class="match-highlight">${char}</span>`;
-                    } else {
-                        sequenceText += char;
-                    }
-                }
-                sequenceSpan.innerHTML = sequenceText;
-                line.appendChild(sequenceSpan);
-                content.appendChild(line);
-            }
-        }
-
-        // Add zoom controls
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            const content = document.getElementById('sequenceContent');
-            const currentZoom = parseInt(content.style.fontSize) || 100;
-            content.style.fontSize = `${currentZoom + 10}%`;
-            document.getElementById('zoomLevel').textContent = `${currentZoom + 10}%`;
-        });
-
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            const content = document.getElementById('sequenceContent');
-            const currentZoom = parseInt(content.style.fontSize) || 100;
-            if (currentZoom > 50) {
-                content.style.fontSize = `${currentZoom - 10}%`;
-                document.getElementById('zoomLevel').textContent = `${currentZoom - 10}%`;
-            }
-        });
-
-        // Add position toggle
-        document.getElementById('showPositions').addEventListener('change', function() {
-            const positions = document.querySelectorAll('.position-numbers');
-            positions.forEach(pos => {
-                pos.style.display = this.checked ? 'inline' : 'none';
-            });
         });
     </script>
 </body>

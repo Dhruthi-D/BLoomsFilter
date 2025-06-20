@@ -6,61 +6,50 @@
     <title>Analysis - Bloom Filter DNA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <style>
         :root {
-            --primary-color: #4B5563;
-            --secondary-color: #6366F1;
-            --accent-color: #A5B4FC;
-            --background-color: #f8f9fa;
-            --card-shadow: 0 4px 16px rgba(75, 85, 99, 0.08);
-            --gradient: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%);
-            --gradient-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
-            --font-main: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --primary: #14b8a6;
+            --secondary: #f59e42;
+            --accent: #fbbf24;
+            --background: #f9fafb;
+            --surface: #fff;
+            --text: #1e293b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --border-radius: 10px;
+            --shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+            --font-main: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
         }
-        body { background: var(--background-color); font-family: var(--font-main); transition: background 0.3s, color 0.3s; }
-        body.dark-mode { background: #181a1b; color: #f1f1f1; }
+        body { background: var(--background); color: var(--text); font-family: var(--font-main); transition: background 0.3s, color 0.3s; }
+        body.dark-mode { background: #181f2a; color: #f1f5f9; }
         .container { max-width: 1200px; }
-        h1 { color: var(--primary-color); font-weight: 700; margin-bottom: 2rem; letter-spacing: 1px; }
+        h1, h5.card-title { color: var(--primary); font-weight: 700; margin-bottom: 2rem; letter-spacing: 1px; }
         body.dark-mode h1, body.dark-mode .card-title { color: #fff; }
-        .card { border: none; border-radius: 18px; box-shadow: var(--card-shadow); transition: transform 0.3s, box-shadow 0.3s; margin-bottom: 1.5rem; background: var(--gradient); color: #222; animation: fadeInUp 0.7s; overflow: hidden; }
-        .card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 8px 32px rgba(75, 85, 99, 0.15); }
-        body.dark-mode .card { background: var(--gradient-dark); color: #f1f1f1; }
-        .card-title { color: var(--primary-color); font-weight: 700; margin-bottom: 1.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
-        .card-title i { color: var(--secondary-color); }
-        .table { border-radius: 12px; overflow: hidden; background: #fff; margin-bottom: 0; animation: fadeIn 1.2s; }
-        .table thead th { background: var(--primary-color); color: #fff; font-weight: 600; border: none; position: sticky; top: 0; z-index: 2; }
+        .card { border: none; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 1.5rem; background: var(--surface); color: var(--text); padding: 0.5rem 0.5rem 0.5rem 0.5rem; }
+        .card:hover { box-shadow: 0 8px 32px rgba(37, 99, 235, 0.10); }
+        body.dark-mode .card { background: #232a36; color: #f1f5f9; }
+        .card-title { color: var(--primary); font-weight: 700; margin-bottom: 1.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card-title i { color: var(--secondary); }
+        .table { border-radius: var(--border-radius); overflow: hidden; background: var(--surface); margin-bottom: 0; }
+        .table thead th { background: var(--primary); color: #fff; font-weight: 600; border: none; position: sticky; top: 0; z-index: 2; }
         .table tbody tr { transition: background 0.2s; }
         .table tbody tr:nth-child(even) { background: #f3f8fa; }
-        .table tbody tr:hover { background: rgba(99, 102, 241, 0.09); }
+        .table tbody tr:hover { background: rgba(37, 99, 235, 0.09); }
         .badge { font-size: 0.95em; padding: 0.5em 0.8em; border-radius: 8px; font-weight: 600; }
-        .badge-success { background: #22c55e; color: #fff; }
-        .badge-danger { background: #ef4444; color: #fff; }
-        .badge-info { background: var(--secondary-color); color: #fff; }
-        .badge-warning { background: #fbbf24; color: #222; }
-        .chart-container { 
-            margin-top: 1rem; 
-            height: 350px; 
-            border-radius: 12px; 
-            background: #fff; 
-            padding: 1rem; 
-            animation: fadeIn 1.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease;
-        }
-        .chart-container:hover {
-            transform: translateY(-5px);
-        }
-        body.dark-mode .chart-container { 
-            background: #232526; 
-            color: #f1f1f1;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .dark-toggle { position: fixed; top: 30px; left: 40px; z-index: 1001; background: var(--gradient); color: #fff; border: none; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 2px 8px rgba(75, 85, 99, 0.13); cursor: pointer; transition: background 0.3s, color 0.3s; }
-        .dark-toggle:hover { background: var(--gradient-dark); color: #f1c40f; }
-        .btn-back { background: var(--gradient); color: #fff; border: none; border-radius: 8px; font-weight: 600; margin-bottom: 1.5rem; }
-        .btn-back:hover { background: var(--gradient-dark); color: #fff; }
+        .badge-success { background: var(--success); color: #fff; }
+        .badge-danger { background: var(--danger); color: #fff; }
+        .badge-info { background: var(--info); color: #fff; }
+        .badge-warning { background: var(--accent); color: #222; }
+        .chart-container { margin-top: 1rem; height: 350px; border-radius: var(--border-radius); background: var(--surface); padding: 1rem; box-shadow: var(--shadow); transition: transform 0.3s ease; }
+        .chart-container:hover { transform: translateY(-5px); }
+        body.dark-mode .chart-container { background: #232a36; color: #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .dark-toggle { position: fixed; top: 30px; left: 40px; z-index: 1001; background: var(--primary); color: #fff; border: none; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 2px 8px rgba(30, 41, 59, 0.13); cursor: pointer; transition: background 0.3s, color 0.3s; }
+        .dark-toggle:hover { background: var(--accent); color: #fff; }
+        .btn-back { background: var(--primary); color: #fff; border: none; border-radius: var(--border-radius); font-weight: 600; margin-bottom: 1.5rem; }
+        .btn-back:hover { background: var(--accent); color: #fff; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>

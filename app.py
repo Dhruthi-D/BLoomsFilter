@@ -76,6 +76,9 @@ original_kmers = set()
 
 latest_results_data = {}
 
+# --- Add a new tracker for k-mer line context ---
+kmer_line_context = {}  # {kmer: [(line_number, line_sequence, start)]}
+
 class PartitionedBloomFilter:
     def __init__(self, capacity, error_rate=0.001, num_partitions=4):
         self.num_partitions = num_partitions
@@ -112,19 +115,21 @@ def validate_dna_sequence(sequence):
     
     return True, "Valid sequence"
 
-def extract_kmers(sequence, k):
-    """Extract k-mers from a DNA sequence, ensuring exact k length"""
+def extract_kmers(sequence, k, line_number=None, line_sequence=None):
+    """Extract k-mers from a DNA sequence, ensuring exact k length. Optionally track line context."""
     kmers = set()
     sequence = clean_sequence(sequence)
     if not sequence:
         return kmers
-    
-    # Only extract k-mers of exact length k
     for i in range(len(sequence) - k + 1):
         kmer = sequence[i:i + k]
-        if len(kmer) == k:  # Double check the length
+        if len(kmer) == k:
             kmers.add(kmer)
-            kmer_tracker.add_kmer(kmer, i)  # Track position of each k-mer
+            kmer_tracker.add_kmer(kmer, i)
+            if line_number is not None and line_sequence is not None:
+                if kmer not in kmer_line_context:
+                    kmer_line_context[kmer] = []
+                kmer_line_context[kmer].append((line_number, line_sequence, i))
     return kmers
 
 def generate_random_kmers(num_kmers, k):
@@ -449,12 +454,13 @@ def upload_file():
                 lines = content.splitlines()
                 logger.debug(f"Number of lines in file: {len(lines)}")
                 
+                kmer_line_context.clear()
                 for i, line in enumerate(lines, 1):
                     if not line.startswith('>'):  # Skip FASTA headers
                         sequence = line.strip().upper()
                         logger.debug(f"Processing line {i}, length: {len(sequence)}")
                         if len(sequence) >= k_value:
-                            new_kmers = extract_kmers(sequence, k_value)
+                            new_kmers = extract_kmers(sequence, k_value, line_number=i, line_sequence=sequence)
                             kmers.update(new_kmers)
                             logger.debug(f"Line {i}: Extracted {len(new_kmers)} k-mers")
             first_seq = next((line.strip() for line in lines if not line.startswith('>')), '')
@@ -626,11 +632,26 @@ def visualize_matches(sequence, matches, k):
     
     # Add match information
     for pos in match_positions:
+        # Find the line context for this match (if available)
+        line_info = None
+        for kmer, contexts in kmer_line_context.items():
+            for ctx in contexts:
+                if ctx[2] == pos:
+                    line_info = {
+                        'line_number': ctx[0],
+                        'line_sequence': ctx[1],
+                        'start': ctx[2],
+                        'end': ctx[2] + k
+                    }
+                    break
+            if line_info:
+                break
         vis['matches'].append({
             'start': pos,
             'end': pos + k,
             'sequence': sequence[pos:pos + k],
-            'context': get_sequence_context(sequence, pos, k)
+            'context': get_sequence_context(sequence, pos, k),
+            'line_info': line_info
         })
     
     return vis
@@ -664,12 +685,20 @@ def search():
             for kmer in kmers:
                 if len(kmer) == k_value and kmer in filter_instance:
                     positions = kmer_tracker.get_positions(kmer)
-                    # Get context for each position
-                    contexts = [get_sequence_context(query, pos, k_value) for pos in positions]
+                    # Get line context for each position
+                    line_contexts = []
+                    if kmer in kmer_line_context:
+                        for (line_number, line_sequence, start) in kmer_line_context[kmer]:
+                            line_contexts.append({
+                                'line_number': line_number,
+                                'line_sequence': line_sequence,
+                                'start': start,
+                                'end': start + k_value
+                            })
                     matching_kmers.append({
                         'kmer': kmer,
                         'positions': positions,
-                        'contexts': contexts,
+                        'contexts': line_contexts,
                         'length': len(kmer)
                     })
             
