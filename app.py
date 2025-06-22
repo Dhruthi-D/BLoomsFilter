@@ -3,7 +3,7 @@ import time
 import psutil
 import hashlib
 import numpy as np
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_file
 from werkzeug.utils import secure_filename
 from pybloom_live import BloomFilter, ScalableBloomFilter
 import matplotlib
@@ -773,6 +773,66 @@ def analysis():
 @app.route('/latest-results')
 def latest_results():
     return jsonify(latest_results_data)
+
+@app.route('/biological-insights')
+def biological_insights():
+    return render_template('biological_insights.html')
+
+@app.route('/api/species-comparison', methods=['POST'])
+def api_species_comparison():
+    try:
+        files = request.files.getlist('species_files')
+        k = int(request.form.get('k_value', 10))
+        if len(files) < 2:
+            return jsonify({'error': 'Please upload at least two files.'}), 400
+        
+        species_kmers = {}
+        species_names = []
+        for file in files:
+            name = file.filename or f"Species_{len(species_names)+1}"
+            content = file.read().decode('utf-8')
+            lines = content.splitlines()
+            seq = ''.join([line.strip().upper() for line in lines if not line.startswith('>')])
+            kmers = set()
+            for i in range(len(seq) - k + 1):
+                kmer = seq[i:i+k]
+                if len(kmer) == k:
+                    kmers.add(kmer)
+            species_kmers[name] = kmers
+            species_names.append(name)
+        
+        # Compute unique/shared k-mers
+        all_kmer_sets = list(species_kmers.values())
+        shared_kmers = set.intersection(*all_kmer_sets)
+        unique_counts = {name: len(kmers - set.union(*(species_kmers[n] for n in species_names if n != name))) for name, kmers in species_kmers.items()}
+        venn_data = {name: list(kmers) for name, kmers in species_kmers.items()}
+        summary = {
+            'species': species_names,
+            'total_kmers': {name: len(kmers) for name, kmers in species_kmers.items()},
+            'unique_kmers': unique_counts,
+            'shared_kmers_count': len(shared_kmers),
+            'k_value': k
+        }
+
+        # Pairwise comparison: overlap and Jaccard similarity
+        pairwise_overlap = {}
+        pairwise_jaccard = {}
+        for i, name1 in enumerate(species_names):
+            pairwise_overlap[name1] = {}
+            pairwise_jaccard[name1] = {}
+            for j, name2 in enumerate(species_names):
+                if i == j:
+                    pairwise_overlap[name1][name2] = len(species_kmers[name1])
+                    pairwise_jaccard[name1][name2] = 1.0
+                else:
+                    intersection = len(species_kmers[name1] & species_kmers[name2])
+                    union = len(species_kmers[name1] | species_kmers[name2])
+                    pairwise_overlap[name1][name2] = intersection
+                    pairwise_jaccard[name1][name2] = intersection / union if union else 0.0
+
+        return jsonify({'summary': summary, 'venn_data': venn_data, 'pairwise_overlap': pairwise_overlap, 'pairwise_jaccard': pairwise_jaccard})
+    except Exception as e:
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

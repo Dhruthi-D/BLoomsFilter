@@ -351,6 +351,7 @@
         <a href="/analysis" class="btn btn-primary" style="min-width: 140px;">
             <i class="fas fa-chart-bar me-1"></i> Go to Analysis
         </a>
+        <a href="/biological-insights" class="btn btn-info" style="margin-top: 20px;">Biological Insights</a>
     </div>
     <div class="spinner-overlay" id="spinnerOverlay">
         <div class="spinner-border text-primary" role="status">
@@ -364,58 +365,60 @@
                 <i class="fas fa-trash-alt me-2"></i>Clear Data
             </button>
         </div>
-        <!-- Upload Section -->
-        <div class="row justify-content-center mb-5">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-upload me-2"></i>Upload DNA Sequence File</h5>
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="fileInput" class="form-label">Select FASTA File</label>
-                                <div class="input-group">
-                                    <input type="file" class="form-control" id="fileInput" accept=".fasta,.fa,.txt">
-                                    <button type="button" class="btn btn-primary" id="uploadButton">
-                                        <i class="fas fa-upload"></i> Upload
-                                    </button>
+        <div class="text-center my-4">
+            <!-- Upload Section -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-upload me-2"></i>Upload DNA Sequence File</h5>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="fileInput" class="form-label">Select FASTA File</label>
+                                    <div class="input-group">
+                                        <input type="file" class="form-control" id="fileInput" accept=".fasta,.fa,.txt">
+                                        <button type="button" class="btn btn-primary" id="uploadButton">
+                                            <i class="fas fa-upload"></i> Upload
+                                        </button>
+                                    </div>
+                                    <div id="selectedFileName" class="mt-2 text-muted" style="display: none;">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        <span id="fileName"></span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeFile">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div id="selectedFileName" class="mt-2 text-muted" style="display: none;">
-                                    <i class="fas fa-file-alt me-2"></i>
-                                    <span id="fileName"></span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeFile">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                <div class="mb-3">
+                                    <label for="kValue" class="form-label">K-mer Size (5-20)</label>
+                                    <input type="number" class="form-control" id="kValue" min="5" max="20" value="10">
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="kValue" class="form-label">K-mer Size (5-20)</label>
-                                <input type="number" class="form-control" id="kValue" min="5" max="20" value="10">
-                            </div>
-                            <div class="progress mt-3" id="uploadProgress" style="display: none;">
-                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <div class="alert alert-info mt-3" id="uploadMessage" style="display: none;"></div>
-                        </form>
+                                <div class="progress mt-3" id="uploadProgress" style="display: none;">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="alert alert-info mt-3" id="uploadMessage" style="display: none;"></div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Search Section -->
-        <div class="row justify-content-center mb-5">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-search me-2"></i>Search DNA Sequence</h5>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchInput" placeholder="Enter DNA sequence (e.g., ACGTACGTACGT)" pattern="[ACGTacgt]+" title="Only A, C, G, T characters are allowed">
-                            <button class="btn btn-primary" id="searchButton"><i class="fas fa-search"></i> Search</button>
-                        </div>
-                        <div class="error-message" id="searchError"></div>
-                        <div class="search-info" id="searchInfo">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle"></i> Enter a DNA sequence (only A, C, G, T allowed)
-                            </small>
+            <!-- Search Section -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-search me-2"></i>Search DNA Sequence</h5>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Enter DNA sequence (e.g., ACGTACGTACGT)" pattern="[ACGTacgt]+" title="Only A, C, G, T characters are allowed">
+                                <button class="btn btn-primary" id="searchButton"><i class="fas fa-search"></i> Search</button>
+                            </div>
+                            <div class="error-message" id="searchError"></div>
+                            <div class="search-info" id="searchInfo">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> Enter a DNA sequence (only A, C, G, T allowed)
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>

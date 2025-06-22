@@ -161,6 +161,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             const dark = localStorage.getItem('darkMode') === 'true';
             setDarkMode(dark);
+            // Add event listener for dark mode toggle
+            darkToggle.addEventListener('click', () => {
+                setDarkMode(!document.body.classList.contains('dark-mode'));
+            });
             // Fetch and display latest results, query info, and plots if available
             fetch('/latest-results')
                 .then(response => response.json())
