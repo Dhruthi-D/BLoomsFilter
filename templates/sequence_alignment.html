@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sequence Alignment | DNA Bloom Filter Tools</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary: #14b8a6;
+            --secondary: #f59e42;
+            --accent: #fbbf24;
+            --background: #f9fafb;
+            --surface: #fff;
+            --text: #1e293b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --border-radius: 10px;
+            --shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+            --font-main: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            font-family: var(--font-main);
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background-color: #181f2a;
+            color: #f1f5f9;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        h1, h5.card-title, .section-title {
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        body.dark-mode h1, body.dark-mode .card-title, body.dark-mode .section-title {
+            color: #fff;
+        }
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        }
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.10);
+        }
+        body.dark-mode .card {
+            background: #232a36;
+            color: #f1f5f9;
+        }
+        .card-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border: none;
+            padding: 0.6rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            transform: scale(1.04);
+        }
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-outline-secondary {
+            color: var(--text);
+            border-color: #888;
+        }
+        .btn-outline-secondary:hover {
+            background: #888;
+            color: #fff;
+        }
+        .form-control {
+            border-radius: var(--border-radius);
+            border: 1.5px solid #dee2e6;
+            padding: 0.85rem;
+            font-size: 1.1rem;
+            transition: border 0.3s, box-shadow 0.3s;
+            background: var(--surface);
+            color: var(--text);
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.18);
+        }
+        .legend {
+            margin-top: 18px;
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.98em;
+        }
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .return-btn {
+            position: absolute;
+            left: 32px;
+            top: 32px;
+            background: var(--surface);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            padding: 7px 18px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .return-btn:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .dark-toggle {
+            position: fixed;
+            top: 30px;
+            right: 40px;
+            z-index: 1000;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 2px 8px rgba(30, 41, 59, 0.13);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-toggle:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        body.dark-mode .dark-toggle {
+            background: var(--accent);
+            color: #fff;
+        }
+        /* Alignment SVG and pie chart containers */
+        #dnaStrandVis {
+            margin-top:32px;
+            max-height:500px;
+            overflow-y:auto;
+            background: var(--surface);
+            border:1.5px solid #b2f5ea;
+            border-radius:12px;
+            min-width:340px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        #analysisGraphs {
+            margin: 40px 0 0 0;
+            padding: 28px 18px;
+            background: var(--background);
+            border-radius: 12px;
+            border: 1.5px solid #b2f5ea;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #analysisGraphs h2 {
+            color: var(--primary);
+            font-size:1.3em;
+            margin-top:0;
+        }
+        /* Alignment base coloring */
+        .base.match {
+            background: #b2f5ea;
+            color: var(--primary);
+            border-radius: 3px;
+        }
+        .base.mismatch {
+            background: #ffe0e0;
+            color: var(--danger);
+            border-radius: 3px;
+        }
+        .base.gmo_insertion {
+            background: #e0f7fa;
+            color: #00796b;
+            border-radius: 3px;
+        }
+        .base.wt_deletion {
+            background: #fbe9e7;
+            color: #d84315;
+            border-radius: 3px;
+        }
+        body.dark-mode .base.match {
+            background: #005f5f;
+            color: #b2f5ea;
+        }
+        body.dark-mode .base.mismatch {
+            background: #5f2121;
+            color: #ffe0e0;
+        }
+        body.dark-mode .base.gmo_insertion {
+            background: #005f5f;
+            color: #e0f7fa;
+        }
+        body.dark-mode .base.wt_deletion {
+            background: #5f3c21;
+            color: #fbe9e7;
+        }
+        .btn-back {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+        }
+        .btn-back:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" style="position: fixed; top: 30px; right: 40px; z-index: 1000;">
+        <i class="fas fa-moon"></i>
+    </button>
+    <div class="container py-4">
+        <a href="/" class="btn btn-back mb-4"><i class="fas fa-arrow-left me-2"></i>Back to Main</a>
+        <h1 class="mb-4" style="color:var(--primary); font-weight:700; letter-spacing:1px;">Direct Sequence Alignment</h1>
+        <div class="card mb-4">
+            <div class="card-header">Upload & Settings</div>
+            <div class="card-body">
+                <form id="alignForm" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="wt_file" class="form-label">Wild-Type DNA Sequence File:</label>
+                            <input class="form-control" type="file" id="wt_file" name="wt_file" accept=".txt,.fasta,.fa" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="gmo_file" class="form-label">GMO DNA Sequence File:</label>
+                            <input class="form-control" type="file" id="gmo_file" name="gmo_file" accept=".txt,.fasta,.fa" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Align Sequences</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">Alignment Legend</div>
+            <div class="card-body">
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-color base match"></span>Match</div>
+                    <div class="legend-item"><span class="legend-color base mismatch"></span>Mismatch</div>
+                    <div class="legend-item"><span class="legend-color base gmo_insertion"></span>Insertion in GMO</div>
+                    <div class="legend-item"><span class="legend-color base wt_deletion"></span>Deletion in WT</div>
+                </div>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">Alignment Visualization</div>
+            <div class="card-body">
+                <div id="dnaStrandVis"></div>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">Alignment Analysis Graphs</div>
+            <div class="card-body">
+                <div id="analysisGraphsContent" style="text-align:center;">
+                    <canvas id="pieChart" width="300" height="300" style="margin: 0 auto; display:block;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+    const darkToggle = document.getElementById('darkToggle');
+    const darkIcon = darkToggle.querySelector('i');
+    function setDarkMode(enabled) {
+        if (enabled) {
+            document.body.classList.add('dark-mode');
+            darkIcon.classList.remove('fa-moon');
+            darkIcon.classList.add('fa-sun');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkIcon.classList.remove('fa-sun');
+            darkIcon.classList.add('fa-moon');
+            localStorage.setItem('darkMode', 'false');
+        }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        const dark = localStorage.getItem('darkMode') === 'true';
+        setDarkMode(dark);
+    });
+    darkToggle.addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark-mode');
+        setDarkMode(!isDark);
+    });
+    // Form submission
+    document.getElementById('alignForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const wtFile = document.getElementById('wt_file').files[0];
+        const gmoFile = document.getElementById('gmo_file').files[0];
+        if (!wtFile || !gmoFile) return;
+        const formData = new FormData();
+        formData.append('dna_files', wtFile);
+        formData.append('dna_files', gmoFile);
+        const visDiv = document.getElementById('dnaStrandVis');
+        visDiv.innerHTML = '';
+        // Clear analysis graphs
+        document.getElementById('analysisGraphsContent').innerHTML = '<canvas id="pieChart" width="300" height="300" style="margin: 0 auto; display:block;"></canvas>';
+        try {
+            const resp = await fetch('/api/sequence-alignment', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.error) {
+                visDiv.innerHTML = `<div style='color:#c00;font-weight:600;'>${data.error}</div>`;
+                return;
+            }
+            renderDnaStrandSvg(data.visualization);
+            renderAnalysisCharts(data.visualization);
+        } catch (err) {
+            visDiv.innerHTML = `<div style='color:#c00;font-weight:600;'>Error: ${err}</div>`;
+        }
+    };
+    // DNA Strand SVG rendering
+    function renderDnaStrandSvg(visualization) {
+        const visDiv = document.getElementById('dnaStrandVis');
+        if (!visualization || visualization.length === 0) { visDiv.innerHTML = ''; return; }
+        const baseRadius = 14, gap = 32, margin = 48;
+        const height = Math.max(visualization.length * gap + margin * 2, 500);
+        const width = 340;
+        const centerX = width / 2;
+        const amplitude = 60;
+        const phaseGap = Math.PI / 8;
+        // Color map
+        const colorMap = {
+            match: '#008080',
+            mismatch: '#c00',
+            gmo_insertion: '#00796b',
+            wt_deletion: '#d84315',
+            other: '#888'
+        };
+        const bgMap = {
+            match: '#b2f5ea',
+            mismatch: '#ffe0e0',
+            gmo_insertion: '#e0f7fa',
+            wt_deletion: '#fbe9e7',
+            other: '#eee'
+        };
+        // Precompute spiral/sine positions (vertical)
+        let wtPoints = [], gmoPoints = [];
+        for (let i = 0; i < visualization.length; ++i) {
+            const y = margin + i * gap;
+            const phase = i * phaseGap;
+            // WT left of center, GMO right of center
+            wtPoints.push({
+                x: centerX - Math.sin(phase) * amplitude - 36,
+                y
+            });
+            gmoPoints.push({
+                x: centerX + Math.sin(phase) * amplitude + 36,
+                y
+            });
+        }
+        // SVG header with labels
+        let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background:none;display:block;margin:auto;min-height:500px;max-height:100%;">
+            <text x="${wtPoints[0].x}" y="${wtPoints[0].y - 24}" text-anchor="middle" font-size="18" font-weight="bold" fill="#008080">Wild-Type</text>
+            <text x="${gmoPoints[0].x}" y="${gmoPoints[0].y - 24}" text-anchor="middle" font-size="18" font-weight="bold" fill="#008080">GMO</text>
+        `;
+        // Draw backbone (sine wave)
+        svg += `<polyline fill="none" stroke="#bbb" stroke-width="5" points="`;
+        for (let p of wtPoints) svg += `${p.x},${p.y} `;
+        svg += `" />`;
+        svg += `<polyline fill="none" stroke="#bbb" stroke-width="5" points="`;
+        for (let p of gmoPoints) svg += `${p.x},${p.y} `;
+        svg += `" />`;
+        // Draw connections for matches
+        for (let i = 0; i < visualization.length; ++i) {
+            if (visualization[i].type === 'match') {
+                svg += `<line x1="${wtPoints[i].x+baseRadius}" y1="${wtPoints[i].y}" x2="${gmoPoints[i].x-baseRadius}" y2="${gmoPoints[i].y}" stroke="#008080" stroke-width="2"/>`;
+            }
+        }
+        // Draw WT bases
+        for (let i = 0; i < visualization.length; ++i) {
+            const v = visualization[i];
+            const p = wtPoints[i];
+            svg += `<circle cx="${p.x}" cy="${p.y}" r="${baseRadius}" fill="${bgMap[v.type]}" stroke="${colorMap[v.type]}" stroke-width="2">
+                <title>${v.wt} (${v.type})</title></circle>`;
+            svg += `<text x="${p.x}" y="${p.y+6}" text-anchor="middle" font-size="18" font-weight="bold" fill="${colorMap[v.type]}">${v.wt}</text>`;
+        }
+        // Draw GMO bases
+        for (let i = 0; i < visualization.length; ++i) {
+            const v = visualization[i];
+            const p = gmoPoints[i];
+            svg += `<circle cx="${p.x}" cy="${p.y}" r="${baseRadius}" fill="${bgMap[v.type]}" stroke="${colorMap[v.type]}" stroke-width="2">
+                <title>${v.gmo} (${v.type})</title></circle>`;
+            svg += `<text x="${p.x}" y="${p.y+6}" text-anchor="middle" font-size="18" font-weight="bold" fill="${colorMap[v.type]}">${v.gmo}</text>`;
+        }
+        svg += '</svg>';
+        visDiv.innerHTML = svg;
+        setTimeout(addSvgHoverHandlers, 0);
+    }
+    // Interactive hover for SVG bases
+    function addSvgHoverHandlers() {
+        const svg = document.querySelector('#dnaStrandVis svg');
+        if (!svg) return;
+        svg.querySelectorAll('circle').forEach((circle, idx) => {
+            circle.addEventListener('mouseenter', function() {
+                const tooltip = document.createElement('div');
+                tooltip.id = 'svgTooltip';
+                tooltip.style.position = 'fixed';
+                tooltip.style.background = '#fff';
+                tooltip.style.border = '1.5px solid #008080';
+                tooltip.style.borderRadius = '6px';
+                tooltip.style.padding = '6px 12px';
+                tooltip.style.color = '#008080';
+                tooltip.style.fontWeight = 'bold';
+                tooltip.style.zIndex = 1000;
+                tooltip.innerText = circle.querySelector('title') ? circle.querySelector('title').textContent : '';
+                document.body.appendChild(tooltip);
+                circle.addEventListener('mousemove', function(e) {
+                    tooltip.style.left = (e.clientX + 12) + 'px';
+                    tooltip.style.top = (e.clientY - 12) + 'px';
+                });
+            });
+            circle.addEventListener('mouseleave', function() {
+                const tooltip = document.getElementById('svgTooltip');
+                if (tooltip) tooltip.remove();
+            });
+        });
+    }
+    // Render analysis charts
+    function renderAnalysisCharts(visualization) {
+        const counts = { match: 0, mismatch: 0, gmo_insertion: 0, wt_deletion: 0, other: 0 };
+        for (const v of visualization) counts[v.type] = (counts[v.type] || 0) + 1;
+        // Regular pie chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        if (window.pieChartObj) window.pieChartObj.destroy();
+        window.pieChartObj = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Match', 'Mismatch', 'Insertion in GMO', 'Deletion in WT'],
+                datasets: [{
+                    data: [counts.match, counts.mismatch, counts.gmo_insertion, counts.wt_deletion],
+                    backgroundColor: ['#b2f5ea', '#ffe0e0', '#e0f7fa', '#fbe9e7'],
+                    borderColor: ['#008080', '#c00', '#00796b', '#d84315'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                plugins: { legend: { position: 'bottom' } },
+                animation: { animateRotate: true, animateScale: true }
+            }
+        });
+    }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html> 

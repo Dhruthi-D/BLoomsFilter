@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Species Tools: Comparison & Analytics</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary: #14b8a6;
+            --secondary: #f59e42;
+            --accent: #fbbf24;
+            --background: #f9fafb;
+            --surface: #fff;
+            --text: #1e293b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --border-radius: 10px;
+            --shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+            --font-main: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            font-family: var(--font-main);
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background-color: #181f2a;
+            color: #f1f5f9;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        h1, h5.card-title, .section-title {
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        body.dark-mode h1, body.dark-mode .card-title, body.dark-mode .section-title {
+            color: #fff;
+        }
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            background: var(--surface);
+            color: var(--text);
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        }
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.10);
+        }
+        body.dark-mode .card {
+            background: #232a36;
+            color: #f1f5f9;
+        }
+        .card-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border: none;
+            padding: 0.6rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            transform: scale(1.04);
+        }
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-outline-secondary {
+            color: var(--text);
+            border-color: #888;
+        }
+        .btn-outline-secondary:hover {
+            background: #888;
+            color: #fff;
+        }
+        .form-control {
+            border-radius: var(--border-radius);
+            border: 1.5px solid #dee2e6;
+            padding: 0.85rem;
+            font-size: 1.1rem;
+            transition: border 0.3s, box-shadow 0.3s;
+            background: var(--surface);
+            color: var(--text);
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.18);
+        }
+        .table {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: var(--surface);
+            margin-bottom: 0;
+        }
+        .table thead th {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .table tbody tr {
+            transition: background 0.2s;
+        }
+        .table tbody tr:nth-child(even) {
+            background: #f3f8fa;
+        }
+        .table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.09);
+        }
+        .alert-warning, .alert-info {
+            border-radius: var(--border-radius);
+            border: none;
+            font-size: 1.05rem;
+        }
+        .venn-container, .heatmap-container {
+            min-height: 350px;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .alert-warning, .alert-info {
+            background: #fffbe6;
+            color: #b45309;
+            border-color: #ffe066;
+        }
+        body.dark-mode .alert-warning, body.dark-mode .alert-info {
+            background: #232a36;
+            color: #ffe066;
+            border-color: #ffe066;
+        }
+        body.dark-mode .table, body.dark-mode .chart-container {
+            background: #232a36;
+            color: #f1f5f9;
+        }
+        .dark-toggle {
+            position: fixed;
+            top: 30px;
+            right: 40px;
+            z-index: 1000;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 2px 8px rgba(30, 41, 59, 0.13);
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        .dark-toggle:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-back {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+        }
+        .btn-back:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" style="position: fixed; top: 30px; right: 40px; z-index: 1000;">
+        <i class="fas fa-moon"></i>
+    </button>
+    <div class="container py-4">
+        <a href="/" class="btn btn-back mb-4"><i class="fas fa-arrow-left me-2"></i>Back to Main</a>
+        <h1 class="mb-4" style="color:var(--primary); font-weight:700; letter-spacing:1px;">Species Tools: Comparison & Analytics</h1>
+        <div class="card mb-4">
+            <div class="card-header">Upload & Settings</div>
+            <div class="card-body">
+                <form id="species-tools-form" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="species_file_1" class="form-label">Species 1:</label>
+                            <input class="form-control" type="file" id="species_file_1" name="species_files" required>
+                            <div id="selected-file-1" class="mt-2 text-muted"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="species_file_2" class="form-label">Species 2:</label>
+                            <input class="form-control" type="file" id="species_file_2" name="species_files" required>
+                            <div id="selected-file-2" class="mt-2 text-muted"></div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="k_value" class="form-label">K-mer size (k):</label>
+                            <input class="form-control" type="number" id="k_value" name="k_value" min="5" max="20" value="10" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="motif" class="form-label">Motif (optional):</label>
+                            <input class="form-control" type="text" id="motif" name="motif" maxlength="20" placeholder="e.g. CGG">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" id="analyzeBtn">Analyze</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="error-message" class="alert alert-danger d-none mt-3"></div>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">1. Species Comparison</div>
+            <div class="card-body">
+                <div id="summary-table"></div>
+                <div id="pairwise-table" class="mt-4"></div>
+                <div class="venn-container mt-4" id="venn-diagram"></div>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">2. K-mer Uniqueness Heatmap</div>
+            <div class="card-body">
+                <div class="heatmap-container" id="heatmap"></div>
+            </div>
+        </div>
+        <div class="card result-block">
+            <div class="card-header section-title">3. GC Content & Motif/Palindromic Analysis</div>
+            <div class="card-body">
+                <div id="analytics-table"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/venn.js@0.2.20/venn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+    function showError(msg) {
+        const err = document.getElementById('error-message');
+        err.textContent = msg;
+        err.classList.remove('d-none');
+    }
+    function hideError() {
+        document.getElementById('error-message').classList.add('d-none');
+    }
+    function renderSummaryTable(summary) {
+        console.log('renderSummaryTable called with:', summary);
+        if (!summary.species || summary.species.length === 0) {
+            document.getElementById('summary-table').innerHTML = '<div class="alert alert-warning">No summary data available.</div>';
+            return;
+        }
+        let html = `<table class='table table-bordered'><thead><tr><th>Species</th><th>Total k-mers</th><th>Unique k-mers</th><th>Shared k-mers</th></tr></thead><tbody>`;
+        for (const name of summary.species) {
+            html += `<tr><td>${name}</td><td>${summary.total_kmers[name]}</td><td>${summary.unique_kmers[name]}</td><td>${summary.shared_kmers_count}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('summary-table').innerHTML = html;
+    }
+    function renderPairwiseTable(pairwise_overlap, pairwise_jaccard, species) {
+        let html = `<h5>Pairwise Overlap</h5><table class='table table-sm table-bordered'><thead><tr><th></th>`;
+        for (const s of species) html += `<th>${s}</th>`;
+        html += '</tr></thead><tbody>';
+        for (const s1 of species) {
+            html += `<tr><th>${s1}</th>`;
+            for (const s2 of species) {
+                html += `<td>${pairwise_overlap[s1][s2]}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        html += `<h5>Pairwise Jaccard Similarity</h5><table class='table table-sm table-bordered'><thead><tr><th></th>`;
+        for (const s of species) html += `<th>${s}</th>`;
+        html += '</tr></thead><tbody>';
+        for (const s1 of species) {
+            html += `<tr><th>${s1}</th>`;
+            for (const s2 of species) {
+                html += `<td>${pairwise_jaccard[s1][s2].toFixed(3)}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('pairwise-table').innerHTML = html;
+    }
+    function renderHeatmap(heatmap) {
+        const data = [{
+            z: heatmap.matrix,
+            x: heatmap.species,
+            y: heatmap.species,
+            type: 'heatmap',
+            colorscale: 'Viridis',
+            colorbar: { title: 'Unique k-mers' }
+        }];
+        const layout = {
+            title: 'K-mer Uniqueness Heatmap',
+            xaxis: { title: 'Species' },
+            yaxis: { title: 'Species' }
+        };
+        Plotly.newPlot('heatmap', data, layout, {responsive: true});
+    }
+    function renderAnalyticsTable(analytics, species) {
+        let html = `<table class='table table-bordered'><thead><tr><th>Species</th><th>GC Content (%)</th><th>Palindromic k-mers</th><th>Motif (${analytics.motif || '-'}) Count</th></tr></thead><tbody>`;
+        for (const name of species) {
+            html += `<tr><td>${name}</td><td>${analytics.gc_content[name].toFixed(2)}</td><td>${analytics.palindromic_counts[name]}</td><td>${analytics.motif_counts[name]}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('analytics-table').innerHTML = html;
+    }
+    function renderVenn(venn_data) {
+        const species = Object.keys(venn_data);
+        if (species.length === 2 || species.length === 3) {
+            const sets = species.map((name, i) => ({sets: [name], size: venn_data[name].length}));
+            if (species.length === 2) {
+                sets.push({sets: [species[0], species[1]], size: venn_data[species[0]].filter(x => venn_data[species[1]].includes(x)).length});
+            } else if (species.length === 3) {
+                sets.push({sets: [species[0], species[1]], size: venn_data[species[0]].filter(x => venn_data[species[1]].includes(x)).length});
+                sets.push({sets: [species[0], species[2]], size: venn_data[species[0]].filter(x => venn_data[species[2]].includes(x)).length});
+                sets.push({sets: [species[1], species[2]], size: venn_data[species[1]].filter(x => venn_data[species[2]].includes(x)).length});
+                sets.push({sets: [species[0], species[1], species[2]], size: venn_data[species[0]].filter(x => venn_data[species[1]].includes(x) && venn_data[species[2]].includes(x)).length});
+            }
+            const vennDiv = document.getElementById('venn-diagram');
+            if (vennDiv) {
+                vennDiv.innerHTML = '';
+                try {
+                    venn.VennDiagram()(d3.select('#venn-diagram').datum(sets));
+                } catch (e) {
+                    vennDiv.innerHTML = '<div class="alert alert-warning">Venn diagram could not be rendered. Please ensure your browser supports SVG and that d3.js and venn.js are loaded.</div>';
+                    console.error('Venn diagram error:', e);
+                }
+            }
+        } else {
+            document.getElementById('venn-diagram').innerHTML = '<div class="alert alert-info">Venn diagram is only shown for 2 or 3 species.</div>';
+        }
+    }
+    document.getElementById('analyzeBtn').addEventListener('click', function(e) {
+        console.log('Analyze button clicked');
+        hideError();
+        const form = document.getElementById('species-tools-form');
+        const data = new FormData(form);
+        fetch('/api/species-tools', {
+            method: 'POST',
+            body: data
+        })
+        .then(r => r.json())
+        .then(res => {
+            console.log('API response:', res);
+            if (res.error) {
+                showError(res.error);
+                return;
+            }
+            if (!res.summary || !res.venn_data || !res.pairwise_overlap) {
+                showError('Unexpected response from server. Please check the backend logs.');
+                return;
+            }
+            renderSummaryTable(res.summary);
+            renderPairwiseTable(res.pairwise_overlap, res.pairwise_jaccard, res.summary.species);
+            renderHeatmap(res.heatmap);
+            renderAnalyticsTable(res.analytics, res.summary.species);
+            renderVenn(res.venn_data);
+        })
+        .catch(err => {
+            showError('Error: ' + err);
+            console.error('Fetch error:', err);
+        });
+    });
+    // Show selected file names for user feedback (two inputs)
+    document.getElementById('species_file_1').addEventListener('change', function() {
+        const file = this.files[0];
+        document.getElementById('selected-file-1').textContent = file ? `Selected: ${file.name}` : '';
+    });
+    document.getElementById('species_file_2').addEventListener('change', function() {
+        const file = this.files[0];
+        document.getElementById('selected-file-2').textContent = file ? `Selected: ${file.name}` : '';
+    });
+    // Use the same dark mode logic as index.html
+    const darkToggle = document.getElementById('darkToggle');
+    const darkIcon = darkToggle.querySelector('i');
+    function setDarkMode(enabled) {
+        if (enabled) {
+            document.body.classList.add('dark-mode');
+            darkIcon.classList.remove('fa-moon');
+            darkIcon.classList.add('fa-sun');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkIcon.classList.remove('fa-sun');
+            darkIcon.classList.add('fa-moon');
+            localStorage.setItem('darkMode', 'false');
+        }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        const dark = localStorage.getItem('darkMode') === 'true';
+        setDarkMode(dark);
+    });
+    darkToggle.addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark-mode');
+        setDarkMode(!isDark);
+    });
+    </script>
+</body>
+</html> 

@@ -1,35 +1,53 @@
-# DNA Sequence Bloom Filter Application
+# DNA Sequence Bloom Filter Web Application
 
-This application implements three different types of Bloom filters (Standard, Scalable, and Partitioned) for efficient DNA sequence pattern matching and comparison. It provides a web interface for uploading DNA sequences and performing quick pattern searches.
+A modern, interactive web app for DNA sequence analysis, comparison, and visualization using advanced Bloom filter-based tools.
 
-## What is a Bloom Filter?
-
-A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can have false positives but never false negatives. This makes it perfect for DNA sequence matching where we want to quickly determine if a sequence pattern might exist in a larger dataset.
-
-The application implements three types of Bloom filters:
-1. **Standard Bloom Filter**: Fixed-size implementation with a predefined error rate
-2. **Scalable Bloom Filter**: Automatically grows as more items are added while maintaining the desired false positive rate
-3. **Partitioned Bloom Filter**: Divides the bit array into partitions to reduce false positives
+---
 
 ## Features
 
-- Web-based interface for easy interaction
-- Support for FASTA format DNA sequence files
-- Three different Bloom filter implementations
-- Real-time performance metrics:
-  - Insertion time
-  - Memory usage
-  - False positive rate
-- Interactive visualizations using Plotly
-- K-mer based sequence analysis
-- Efficient DNA pattern searching
-- Performance comparison between different Bloom filter types
+### 🌱 **Bloom Filter Analysis**
+- **Upload DNA sequence files** (FASTA or plain text).
+- **Choose k-mer size** (5–20).
+- **Three Bloom filter types:** Standard, Scalable, Partitioned.
+- **Performance metrics:** Insertion time, memory usage, false positive rate.
+- **Interactive visualizations:** Real-time performance graphs, k-mer analysis, and comparison charts.
+- **Efficient pattern search:** Search for DNA motifs or sequences, with match context and statistics.
+
+### 🧬 **Species Tools**
+- **Compare two species' DNA files** side-by-side.
+- **K-mer uniqueness heatmap:** Visualize unique and shared k-mers between species.
+- **Venn diagram:** See overlap and uniqueness of k-mers.
+- **Pairwise statistics:** Overlap and Jaccard similarity.
+- **GC content, motif, and palindromic k-mer analysis** for each species.
+- **Modern, responsive UI** with dark mode and clear feedback.
+
+### 🔗 **Direct Sequence Alignment**
+- **Upload wild-type and GMO DNA files** for global alignment (Needleman-Wunsch).
+- **Interactive alignment visualization:** Color-coded matches, mismatches, insertions, deletions.
+- **DNA strand SVG diagram:** Modern, zoomable, with tooltips.
+- **Alignment summary pie chart** and additional analysis graphs.
+
+### 📊 **Analysis Dashboard**
+- **Compare performance** of all Bloom filter types on your data.
+- **View and download results** for further study.
+
+### ℹ️ **Know More**
+- **Educational section** explaining Bloom filters, their types, and real-world use cases.
+- **Comparison table** and diagrams for quick understanding.
+
+### 🌓 **Modern UI/UX**
+- **Floating dark mode toggle** (persistent across sessions).
+- **Consistent teal accent color and modern design.**
+- **Accessible navigation:** "Back to Main" on all feature pages.
+
+---
 
 ## Installation
 
 ### Prerequisites
 - Python 3.12 or higher
-- pip (Python package installer)
+- pip
 
 ### Clone the Repository
 ```bash
@@ -42,81 +60,67 @@ cd BLoomsFilter
 pip install -r requirements.txt
 ```
 
+---
+
 ## Usage
 
-1. Start the Flask application:
-```bash
-python app.py
-```
+1. **Start the Flask app:**
+   ```bash
+   python app.py
+   ```
+2. **Open your browser:**  
+   [http://localhost:5000](http://localhost:5000)
 
-2. Open your web browser and go to:
-```
-http://localhost:5000
-```
+3. **Main Navigation:**
+   - **Know More:** Learn about Bloom filters and DNA analysis.
+   - **Go to Analysis:** Upload a DNA file, select k-mer size, and analyze with Bloom filters.
+   - **Species Tools:** Compare two species' DNA, visualize k-mer uniqueness, and analyze motifs.
+   - **Direct Sequence Alignment:** Align wild-type and GMO DNA, view interactive results.
 
-3. Using the Web Interface:
-   - Upload a DNA sequence file (FASTA format)
-   - Set the k-mer size (between 5-20)
-   - Use the search functionality to find patterns
+---
 
-### Input File Format
-The application accepts FASTA format files containing DNA sequences. Example:
-```
->Sequence_1
-ATCGATCGATCGATCGATCG
->Sequence_2
-GCTAGCTAGCTAGCTAGCTA
-```
+## Input File Format
 
-### Search Guidelines
-- Search queries must be at least as long as the k-mer size
-- Use only valid DNA characters (A, T, C, G)
-- Longer sequences will provide more accurate results
+- **FASTA or plain text** (one sequence per line or FASTA headers).
+- Example:
+  ```
+  >Sequence_1
+  ATCGATCGATCGATCGATCG
+  >Sequence_2
+  GCTAGCTAGCTAGCTAGCTA
+  ```
+
+- **Sample files** are provided in the `dataset/` directory.
+
+---
+
+## Directory Structure
+
+- `app.py` — Main Flask app
+- `templates/` — All HTML pages (main, analysis, species tools, alignment, know more)
+- `uploads/` — Temporary file storage
+- `dataset/` — Example DNA files
+- `requirements.txt` — Python dependencies
+
+---
 
 ## Technical Details
 
-### Application Structure
-- `app.py`: Main Flask application file
-- `templates/`: HTML templates for the web interface
-- `static/`: CSS, JavaScript, and other static files
-- `uploads/`: Temporary storage for uploaded files
+- **Bloom filter implementations:** Standard, Scalable, Partitioned (pybloom-live and custom).
+- **K-mer extraction, motif search, palindromic analysis, GC content calculation.**
+- **Global sequence alignment:** Needleman-Wunsch algorithm for direct comparison.
+- **Interactive visualizations:** Plotly, Chart.js, D3.js, and SVG.
+- **Robust error handling** for file format, sequence validation, and upload issues.
 
-### Key Components
-1. **File Processing**:
-   - FASTA file parsing
-   - K-mer extraction
-   - Sequence validation
-
-2. **Bloom Filter Implementation**:
-   - Standard Bloom Filter using pybloom-live
-   - Scalable Bloom Filter for growing datasets
-   - Custom Partitioned Bloom Filter
-
-3. **Performance Monitoring**:
-   - Memory usage tracking
-   - Insertion time measurement
-   - False positive rate calculation
-
-4. **Visualization**:
-   - Real-time performance graphs
-   - Comparison charts
-   - Interactive plots
-
-## Performance Considerations
-
-- Memory Usage: The application optimizes memory usage through batch processing
-- Search Speed: Utilizes efficient hashing and bit array operations
-- Scalability: Handles large DNA sequences through chunked processing
-- False Positive Rate: Maintained at approximately 0.1% (configurable)
-
-## Error Handling
-
-The application includes comprehensive error handling for:
-- Invalid file formats
-- Incorrect DNA sequences
-- Memory limitations
-- Invalid search queries
+---
 
 ## Contributing
 
-Feel free to submit issues, fork the repository, and create pull requests for any improvements.
+- Issues and pull requests are welcome!
+- Please ensure new features are well-documented and tested.
+
+---
+
+## License
+
+MIT License (or specify your license here)

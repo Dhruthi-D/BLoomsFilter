@@ -18,6 +18,7 @@ import plotly.utils
 import json
 import logging
 import traceback
+from difflib import SequenceMatcher
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -774,10 +775,6 @@ def analysis():
 def latest_results():
     return jsonify(latest_results_data)
 
-@app.route('/biological-insights')
-def biological_insights():
-    return render_template('biological_insights.html')
-
 @app.route('/api/species-comparison', methods=['POST'])
 def api_species_comparison():
     try:
@@ -831,6 +828,200 @@ def api_species_comparison():
                     pairwise_jaccard[name1][name2] = intersection / union if union else 0.0
 
         return jsonify({'summary': summary, 'venn_data': venn_data, 'pairwise_overlap': pairwise_overlap, 'pairwise_jaccard': pairwise_jaccard})
+    except Exception as e:
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+@app.route('/species-tools')
+def species_tools():
+    return render_template('species_tools.html')
+
+@app.route('/api/species-tools', methods=['POST'])
+def api_species_tools():
+    try:
+        files = request.files.getlist('species_files')
+        app.logger.info(f"Received {len(files)} files: {[f.filename for f in files]}")
+        k = int(request.form.get('k_value', 10))
+        motif = request.form.get('motif', '').upper()
+        if len(files) < 2:
+            app.logger.error(f"Not enough files received: {len(files)}")
+            return jsonify({'error': 'Please upload two files (one for each species).'}), 400
+
+        species_kmers = {}
+        species_names = []
+        gc_content = {}
+        palindromic_counts = {}
+        motif_counts = {}
+        for file in files:
+            name = file.filename or f"Species_{len(species_names)+1}"
+            content = file.read().decode('utf-8')
+            lines = content.splitlines()
+            seq = ''.join([line.strip().upper() for line in lines if not line.startswith('>')])
+            kmers = set()
+            palindromic = 0
+            motif_count = 0
+            for i in range(len(seq) - k + 1):
+                kmer = seq[i:i+k]
+                if len(kmer) == k:
+                    kmers.add(kmer)
+                    # Palindromic k-mer detection
+                    if kmer == kmer[::-1]:
+                        palindromic += 1
+                    # Motif finding
+                    if motif and motif in kmer:
+                        motif_count += 1
+            species_kmers[name] = kmers
+            species_names.append(name)
+            # GC content
+            gc = (seq.count('G') + seq.count('C')) / len(seq) * 100 if seq else 0
+            gc_content[name] = gc
+            palindromic_counts[name] = palindromic
+            motif_counts[name] = motif_count
+
+        # --- 1. Species Comparison ---
+        all_kmer_sets = list(species_kmers.values())
+        shared_kmers = set.intersection(*all_kmer_sets)
+        unique_counts = {name: len(kmers - set.union(*(species_kmers[n] for n in species_names if n != name))) for name, kmers in species_kmers.items()}
+        venn_data = {name: list(kmers) for name, kmers in species_kmers.items()}
+        summary = {
+            'species': species_names,
+            'total_kmers': {name: len(kmers) for name, kmers in species_kmers.items()},
+            'unique_kmers': unique_counts,
+            'shared_kmers_count': len(shared_kmers),
+            'k_value': k
+        }
+        # Pairwise comparison: overlap and Jaccard similarity
+        pairwise_overlap = {}
+        pairwise_jaccard = {}
+        for i, name1 in enumerate(species_names):
+            pairwise_overlap[name1] = {}
+            pairwise_jaccard[name1] = {}
+            for j, name2 in enumerate(species_names):
+                if i == j:
+                    pairwise_overlap[name1][name2] = len(species_kmers[name1])
+                    pairwise_jaccard[name1][name2] = 1.0
+                else:
+                    intersection = len(species_kmers[name1] & species_kmers[name2])
+                    union = len(species_kmers[name1] | species_kmers[name2])
+                    pairwise_overlap[name1][name2] = intersection
+                    pairwise_jaccard[name1][name2] = intersection / union if union else 0.0
+        # --- 2. K-mer Uniqueness Heatmap ---
+        heatmap_matrix = []
+        for name1 in species_names:
+            row = []
+            for name2 in species_names:
+                if name1 == name2:
+                    row.append(len(species_kmers[name1]))
+                else:
+                    row.append(len(species_kmers[name1] - species_kmers[name2]))
+            heatmap_matrix.append(row)
+        # --- 3. GC Content & Motif/Palindromic Analysis ---
+        analytics = {
+            'gc_content': gc_content,
+            'palindromic_counts': palindromic_counts,
+            'motif_counts': motif_counts,
+            'motif': motif
+        }
+        return jsonify({
+            'summary': summary,
+            'venn_data': venn_data,
+            'pairwise_overlap': pairwise_overlap,
+            'pairwise_jaccard': pairwise_jaccard,
+            'heatmap': {
+                'matrix': heatmap_matrix,
+                'species': species_names
+            },
+            'analytics': analytics
+        })
+    except Exception as e:
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+def needleman_wunsch(seq1, seq2, match=1, mismatch=-1, gap=-2):
+    n, m = len(seq1), len(seq2)
+    score = [[0] * (m + 1) for _ in range(n + 1)]
+    pointer = [[None] * (m + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        score[i][0] = i * gap
+        pointer[i][0] = 'up'
+    for j in range(1, m + 1):
+        score[0][j] = j * gap
+        pointer[0][j] = 'left'
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            diag = score[i-1][j-1] + (match if seq1[i-1] == seq2[j-1] else mismatch)
+            up = score[i-1][j] + gap
+            left = score[i][j-1] + gap
+            max_score = max(diag, up, left)
+            score[i][j] = max_score
+            if max_score == diag:
+                pointer[i][j] = 'diag'
+            elif max_score == up:
+                pointer[i][j] = 'up'
+            else:
+                pointer[i][j] = 'left'
+    # Traceback
+    align1, align2, markup = '', '', ''
+    i, j = n, m
+    while i > 0 or j > 0:
+        if pointer[i][j] == 'diag':
+            align1 = seq1[i-1] + align1
+            align2 = seq2[j-1] + align2
+            if seq1[i-1] == seq2[j-1]:
+                markup = '|' + markup
+            else:
+                markup = '*' + markup
+            i -= 1
+            j -= 1
+        elif pointer[i][j] == 'up':
+            align1 = seq1[i-1] + align1
+            align2 = '-' + align2
+            markup = ' ' + markup
+            i -= 1
+        elif pointer[i][j] == 'left':
+            align1 = '-' + align1
+            align2 = seq2[j-1] + align2
+            markup = ' ' + markup
+            j -= 1
+        else:
+            break
+    return align1, align2, markup
+
+@app.route('/sequence-alignment')
+def sequence_alignment():
+    return render_template('sequence_alignment.html')
+
+@app.route('/api/sequence-alignment', methods=['POST'])
+def api_sequence_alignment():
+    try:
+        dna_files = request.files.getlist('dna_files')
+        if len(dna_files) != 2:
+            return jsonify({'error': 'Please upload two DNA sequence files (wild-type and GMO).'}), 400
+        seqs = []
+        for file in dna_files:
+            content = file.read().decode('utf-8')
+            lines = content.splitlines()
+            seq = ''.join([line.strip().upper() for line in lines if not line.startswith('>')])
+            seqs.append(seq)
+        align1, align2, markup = needleman_wunsch(seqs[0], seqs[1])
+        # Prepare visualization markup: | for match, * for mismatch, space for gap
+        # Also, highlight regions present only in GMO (gaps in wild-type)
+        vis = []
+        for a, b, m in zip(align1, align2, markup):
+            if m == '|':
+                vis.append({'wt': a, 'gmo': b, 'type': 'match'})
+            elif m == '*':
+                vis.append({'wt': a, 'gmo': b, 'type': 'mismatch'})
+            elif a == '-':
+                vis.append({'wt': '-', 'gmo': b, 'type': 'gmo_insertion'})
+            elif b == '-':
+                vis.append({'wt': a, 'gmo': '-', 'type': 'wt_deletion'})
+            else:
+                vis.append({'wt': a, 'gmo': b, 'type': 'other'})
+        return jsonify({
+            'align1': align1,
+            'align2': align2,
+            'markup': markup,
+            'visualization': vis
+        })
     except Exception as e:
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
