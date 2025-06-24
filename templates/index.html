@@ -650,6 +650,7 @@
                 method: 'POST',
                 body: formData
             })
+            .then(res => res.json())
             .then(res => {
                 console.log('API response:', res);
                 if (!res) {
@@ -660,7 +661,7 @@
                     showError(res.error);
                     return;
                 }
-                if (!res.summary || !res.venn_data || !res.pairwise_overlap) {
+                if (!res.results || !res.plots || !res.kmer_analysis) {
                     showError('Unexpected response from server. Please check the backend logs.');
                     return;
                 }
@@ -1078,6 +1079,13 @@
             // Clear sessionStorage
             sessionStorage.removeItem('bloomFilterResults');
         });
+
+        function showError(msg) {
+            const uploadMessage = document.getElementById('uploadMessage');
+            uploadMessage.textContent = msg;
+            uploadMessage.className = 'alert alert-danger mt-3';
+            uploadMessage.style.display = 'block';
+        }
     </script>
 </body>
 </html> 
